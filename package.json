@@ -1,0 +1,43 @@
+{
+  "name": "aspect-grid-collageify",
+  "version": "1.0.0",
+  "description": "A lightweight, pure frontend canvas-based smart photo collage engine supporting visual interactive editing and headless offscreen rendering.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "unpkg": "dist/index.global.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.global.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsup src/index.ts --format esm,cjs,iife --global-name AspectGridCollageify --dts --clean",
+    "prepublishOnly": "pnpm build",
+    "release": "pnpm publish"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README_EN.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "collage",
+    "puzzle",
+    "canvas",
+    "aspect-ratio",
+    "grid",
+    "photo-collage",
+    "offscreen-rendering"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}
