@@ -57,5 +57,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - run: npm ci
       - run: npm publish
