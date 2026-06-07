@@ -10,7 +10,7 @@
   <a href="https://www.npmjs.com/package/aspect-grid-collageify">
     <img src="https://img.shields.io/npm/dm/aspect-grid-collageify.svg?style=flat-square&color=pink" alt="downloads">
   </a>
-  <a href="file:///d:/Documents/Superme/npm/aspect-collageify/LICENSE">
+  <a href="https://github.com/liuxin2533/aspect-grid-collageify/blob/main/LICENSE">
     <img src="https://img.shields.io/npm/l/aspect-grid-collageify.svg?style=flat-square&color=emerald" alt="license">
   </a>
 </p>

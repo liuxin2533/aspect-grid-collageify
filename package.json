@@ -1,6 +1,6 @@
 {
   "name": "aspect-grid-collageify",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, pure frontend canvas-based smart photo collage engine supporting visual interactive editing and headless offscreen rendering.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -35,6 +35,15 @@
     "offscreen-rendering"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liuxin2533/aspect-grid-collageify.git"
+  },
+  "homepage": "https://github.com/liuxin2533/aspect-grid-collageify#readme",
+  "bugs": {
+    "url": "https://github.com/liuxin2533/aspect-grid-collageify/issues"
+  },
+  "author": "liuxin2533",
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
