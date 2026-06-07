@@ -1350,17 +1350,35 @@
       resizeCanvas();
     };
   </script>
-
-  <!-- Fallback loader for local file:// protocol (Loads compiled Global UMD bundle) -->
+  <!-- Unified Application Script Loader (Supports HMR for local dev and robust global UMD bundle for production/offline) -->
   <script>
     (function() {
-      if (window.location.protocol === 'file:') {
-        document.getElementById("info-mode-text").innerText = "Static Offline";
-        document.getElementById("info-mode-text").className = "text-slate-400 font-mono";
-        document.getElementById("load-status-text").innerText = "Offline Mode";
-        document.getElementById("load-status-text").className = "text-slate-400";
-        console.log("Detecting file:// protocol. Loading pre-compiled global bundle...");
-        
+      const isLocalDev = window.location.protocol !== 'file:' && 
+                         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      
+      if (isLocalDev) {
+        document.getElementById("info-mode-text").innerText = "Live Server (ESM)";
+        document.getElementById("info-mode-text").className = "text-brand-400 font-mono";
+        document.getElementById("load-status-text").innerText = "Dev Server Online";
+        document.getElementById("load-status-text").className = "text-emerald-400";
+        console.log("Detecting local dev environment. Loading TypeScript module...");
+
+        // Inject module script to support HMR in Vite dev server
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.innerHTML = `
+          import { AspectGridCollageify } from './src/index.ts';
+          window.initCollageApp(AspectGridCollageify);
+        `;
+        document.head.appendChild(script);
+      } else {
+        const isOffline = window.location.protocol === 'file:';
+        document.getElementById("info-mode-text").innerText = isOffline ? "Static Offline" : "Production (Global)";
+        document.getElementById("info-mode-text").className = isOffline ? "text-slate-400 font-mono" : "text-emerald-400 font-mono";
+        document.getElementById("load-status-text").innerText = isOffline ? "Offline Mode" : "Online";
+        document.getElementById("load-status-text").className = isOffline ? "text-slate-400" : "text-emerald-400";
+        console.log(isOffline ? "Detecting file:// protocol. Loading pre-compiled global bundle..." : "Loading compiled UMD bundle...");
+
         const script = document.createElement('script');
         script.src = './dist/index.global.js';
         script.onload = () => {
@@ -1368,53 +1386,16 @@
             window.initCollageApp(window.AspectGridCollageify);
           } else {
             console.error("AspectGridCollageify not found on window object.");
-            alert("Could not find pre-compiled global bundle. Please run 'pnpm build' inside aspect-collageify first!");
+            alert("Could not find pre-compiled global bundle. Please run 'pnpm build' first!");
           }
         };
         script.onerror = () => {
           console.error("Failed to load ./dist/index.global.js");
-          alert("Failed to load pre-compiled global bundle. Please run 'pnpm build' inside aspect-collageify first to build assets, then open this file again.");
+          alert("Failed to load pre-compiled global bundle. Please run 'pnpm build' to generate dist/ index files.");
         };
         document.head.appendChild(script);
       }
     })();
-  </script>
-
-  <!-- Modern Module loader for http:// / https:// protocols (Loads direct TS source or ESM fallback) -->
-  <script type="module">
-    if (window.location.protocol !== 'file:') {
-      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      
-      if (isLocalDev) {
-        document.getElementById("info-mode-text").innerText = "Live Server (ESM)";
-        document.getElementById("info-mode-text").className = "text-brand-400 font-mono";
-        document.getElementById("load-status-text").innerText = "Dev Server Online";
-        document.getElementById("load-status-text").className = "text-emerald-400";
-        console.log("Detecting local dev environment. Importing TypeScript source...");
-        
-        try {
-          const module = await import('./src/index.ts');
-          window.initCollageApp(module.AspectGridCollageify);
-          return;
-        } catch (e) {
-          console.warn("Could not import TS source directly, trying compiled ESM module...", e);
-        }
-      }
-
-      // Production / Remote HTTP loading (e.g. GitHub Pages)
-      document.getElementById("info-mode-text").innerText = "Production (ESM)";
-      document.getElementById("info-mode-text").className = "text-emerald-400 font-mono";
-      document.getElementById("load-status-text").innerText = "Online";
-      document.getElementById("load-status-text").className = "text-emerald-400";
-      
-      try {
-        const module = await import('./dist/index.mjs');
-        window.initCollageApp(module.AspectGridCollageify);
-      } catch (err) {
-        console.error("Failed to load AspectGridCollageify module:", err);
-        alert("Failed to load AspectGridCollageify module. Please run 'pnpm build' to compile dist files.");
-      }
-    }
   </script>
 </body>
 </html>
