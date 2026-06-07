@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
   pages: write
-  id-token: write # 这个权限保留得很好，OIDC 核心就是靠它
+  id-token: write # OIDC 核心就是靠它
 
 concurrency:
   group: "pages"
@@ -23,16 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org' # 设置官方源
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
           run_install: false
@@ -43,19 +43,19 @@ jobs:
       - name: Build Library
         run: pnpm build
 
-      - name: Publish to NPM
-        run: npm publish --provenance --access public
-
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
         with:
           enablement: true
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v6
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v6
+
+      - run: npm ci
+      - run: npm publish
