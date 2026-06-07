@@ -1383,7 +1383,8 @@
         script.src = './dist/index.global.js';
         script.onload = () => {
           if (window.AspectGridCollageify) {
-            window.initCollageApp(window.AspectGridCollageify);
+            const targetClass = window.AspectGridCollageify.AspectGridCollageify || window.AspectGridCollageify;
+            window.initCollageApp(targetClass);
           } else {
             console.error("AspectGridCollageify not found on window object.");
             alert("Could not find pre-compiled global bundle. Please run 'pnpm build' first!");
