@@ -44,9 +44,7 @@ jobs:
         run: pnpm build
 
       - name: Publish to NPM
-        # 移除了 env: NODE_AUTH_TOKEN
-        # 加上 --registry 确保 pnpm 认准官方源触发 OIDC
-        run: pnpm publish --provenance --no-git-checks --registry=https://registry.npmjs.org/
+        run: npm publish --provenance --access public
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
