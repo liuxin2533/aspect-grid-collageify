@@ -44,8 +44,7 @@ jobs:
         run: pnpm build
 
       - name: Publish to NPM
-        run: pnpm publish --no-git-checks
-        continue-on-error: true
+        run: pnpm publish --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
