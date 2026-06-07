@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
   pages: write
-  id-token: write
+  id-token: write # 这个权限保留得很好，OIDC 核心就是靠它
 
 concurrency:
   group: "pages"
@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://registry.npmjs.org' # 设置官方源
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -44,9 +44,9 @@ jobs:
         run: pnpm build
 
       - name: Publish to NPM
-        run: pnpm publish --provenance --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # 移除了 env: NODE_AUTH_TOKEN
+        # 加上 --registry 确保 pnpm 认准官方源触发 OIDC
+        run: pnpm publish --provenance --no-git-checks --registry=https://registry.npmjs.org/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
