@@ -1,6 +1,6 @@
 {
   "name": "aspect-grid-collageify",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A lightweight, pure frontend canvas-based smart photo collage core with optional visual editing.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
