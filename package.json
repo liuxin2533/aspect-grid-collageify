@@ -1,21 +1,31 @@
 {
   "name": "aspect-grid-collageify",
-  "version": "1.0.1",
-  "description": "A lightweight, pure frontend canvas-based smart photo collage engine supporting visual interactive editing and headless offscreen rendering.",
+  "version": "2.0.0",
+  "description": "A lightweight, pure frontend canvas-based smart photo collage core with optional visual editing.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
-  "unpkg": "dist/index.global.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "default": "./dist/index.global.js"
+      "require": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.mjs",
+      "require": "./dist/core.js"
+    },
+    "./editor": {
+      "types": "./dist/editor.d.ts",
+      "import": "./dist/editor.mjs",
+      "require": "./dist/editor.js"
     }
   },
+  "sideEffects": false,
   "scripts": {
     "dev": "vite",
-    "build": "tsup src/index.ts --format esm,cjs,iife --global-name AspectGridCollageify --dts --clean",
+    "build": "tsup src/index.ts src/core.ts src/editor.ts --format esm,cjs --dts --clean",
     "prepublishOnly": "pnpm build",
     "release": "pnpm publish"
   },
@@ -39,7 +49,7 @@
     "type": "git",
     "url": "https://github.com/liuxin2533/aspect-grid-collageify"
   },
-  "homepage": "https://github.com/liuxin2533/aspect-grid-collageify#readme",
+  "homepage": "https://liuxin2533.github.io/aspect-grid-collageify/",
   "bugs": {
     "url": "https://github.com/liuxin2533/aspect-grid-collageify/issues"
   },
@@ -49,9 +59,7 @@
     "typescript": "^5.0.0",
     "vite": "^5.0.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
-  }
+  "onlyBuiltDependencies": [
+    "esbuild"
+  ]
 }

@@ -1,1402 +1,629 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>aspect-grid-collageify - Interactive Demo & Editor</title>
-  <!-- Google Fonts - Inter & Outfit -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Outfit', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
-              950: '#1e1b4b',
-            },
-            slate: {
-              950: '#0b0f19',
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <title>aspect-grid-collageify v2 demo</title>
   <style>
-    /* Premium custom scrollbar styling */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e2e8f0;
     }
-    ::-webkit-scrollbar-track {
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(79, 70, 229, 0.28), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.18), transparent 30rem),
+        #020617;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin-top: 0.25rem;
+      color: #94a3b8;
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      background: rgba(99, 102, 241, 0.12);
+      color: #c7d2fe;
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 1rem;
+      padding: 1.25rem;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      color: #94a3b8;
+      font-size: 0.82rem;
+    }
+
+    .canvas-shell {
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 1.25rem;
+      background:
+        linear-gradient(45deg, rgba(30, 41, 59, 0.65) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(30, 41, 59, 0.65) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(30, 41, 59, 0.65) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(30, 41, 59, 0.65) 75%);
+      background-size: 22px 22px;
+      background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+    }
+
+    canvas {
+      width: min(60vh, 100%);
+      aspect-ratio: 3 / 4;
+      max-height: 100%;
+      border-radius: 1rem;
+      outline: none;
+      background: #fff;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    canvas.transparent-bg {
+      background: transparent;
+    }
+
+    aside {
+      min-height: 0;
+      overflow: auto;
+      border-left: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.82);
+      padding: 1.25rem;
+    }
+
+    .panel {
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 1rem;
+      padding: 1rem;
+      background: rgba(2, 6, 23, 0.46);
+      margin-bottom: 1rem;
+    }
+
+    .panel h2 {
+      margin: 0 0 0.85rem;
+      font-size: 0.92rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.45rem;
+      margin-bottom: 0.85rem;
+    }
+
+    label {
+      color: #94a3b8;
+      font-size: 0.78rem;
+    }
+
+    select,
+    input[type="number"],
+    input[type="color"],
+    input[type="checkbox"] {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 0.7rem;
       background: #0f172a;
+      color: #e2e8f0;
+      padding: 0.62rem 0.7rem;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 9999px;
+
+    input[type="checkbox"] {
+      width: auto;
+      accent-color: #6366f1;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #6366f1;
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #6366f1;
     }
-    /* Transparent Checkerboard style */
-    .checkerboard {
-      background-image: 
-        linear-gradient(45deg, #1e293b 25%, transparent 25%), 
-        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
-        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+
+    .row,
+    .compact-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .compact-row .field,
+    .compact-row .check-field {
+      margin-bottom: 0.7rem;
+    }
+
+    .check-field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 0.7rem;
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0.62rem 0.7rem;
+      min-height: 40px;
+    }
+
+    .check-field label {
+      color: #e2e8f0;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .action-hint {
+      margin: -0.25rem 0 0.8rem;
+      color: #94a3b8;
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    button {
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 0.75rem;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+      color: #e2e8f0;
+      padding: 0.68rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: transform 0.15s ease, border-color 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #4f46e5, #2563eb);
+      border-color: rgba(199, 210, 254, 0.28);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22);
+    }
+
+    button.danger {
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, 0.24);
+      background: linear-gradient(180deg, rgba(127, 29, 29, 0.42), rgba(15, 23, 42, 0.95));
+    }
+
+    button.secondary {
+      color: #c7d2fe;
+      border-color: rgba(129, 140, 248, 0.24);
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+    }
+
+    .image-list {
+      display: grid;
+      gap: 0.55rem;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 0.25rem;
+    }
+
+    .image-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 0.75rem;
+      padding: 0.65rem;
+      background: rgba(15, 23, 42, 0.72);
+      font-size: 0.8rem;
+    }
+
+    .muted {
+      color: #94a3b8;
+    }
+
+    code {
+      color: #c7d2fe;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        border-left: 0;
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+      }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans h-full overflow-hidden flex flex-col">
-
-  <!-- Header -->
-  <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex items-center justify-between shrink-0 z-10">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
-        <i data-lucide="grid" class="w-5 h-5 text-white"></i>
-      </div>
+<body>
+  <div class="app">
+    <header>
       <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-xl font-display font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">aspect-grid-collageify</h1>
-          <span class="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded-full px-2 py-0.5 font-mono">v1.0.0</span>
-        </div>
-        <p class="text-xs text-slate-400">Pure Frontend Canvas-Based Smart Photo Collage Engine</p>
+        <h1>aspect-grid-collageify <span class="badge">v2 Core / Editor</span></h1>
+        <div class="subtitle">Core 负责最终拼图；Editor 只负责可视化编辑覆盖层和输入事件。</div>
       </div>
-    </div>
-    <div class="flex items-center gap-4">
-      <a href="https://github.com" target="_blank" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm">
-        <i data-lucide="github" class="w-4 h-4"></i>
-        <span>GitHub</span>
-      </a>
-      <span class="w-px h-5 bg-slate-800"></span>
-      <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 rounded-lg px-3 py-1.5 border border-slate-800/80 font-mono">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span id="load-status-text">Loading App...</span>
-      </div>
-    </div>
-  </header>
+      <div class="badge" id="status">Ready</div>
+    </header>
 
-  <!-- Workspace & Control Panels -->
-  <main class="flex-1 flex overflow-hidden">
-    <!-- Left Workspace (Canvas display) -->
-    <section class="flex-1 bg-slate-900 flex flex-col justify-between p-6 relative overflow-hidden">
-      <!-- Title banner & Deselect indicator -->
-      <div class="flex justify-between items-center z-10 min-h-[36px]">
-        <div class="text-sm text-slate-400 flex items-center gap-2">
-          <i data-lucide="info" class="w-4 h-4 text-brand-400"></i>
-          <span>Drag placed images to reorder. Click placeholders to upload.</span>
-        </div>
-        <button id="deselect-btn" class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
-          <i data-lucide="x" class="w-3 h-3"></i>
-          <span>Deselect Active</span>
-        </button>
-      </div>
-
-      <!-- Canvas viewport container -->
-      <div id="canvas-container" class="flex-1 flex items-center justify-center p-4 relative min-h-[300px]">
-        <!-- Canvas wrapped inside checkerboard backing container -->
-        <div id="canvas-wrapper" class="checkerboard rounded-2xl overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center transition-all duration-300">
+    <main>
+      <section class="stage">
+        <div class="canvas-shell">
           <canvas id="collage-canvas"></canvas>
         </div>
-      </div>
-
-      <!-- Stats Footer -->
-      <div class="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800/50 pt-4 z-10">
-        <div class="flex items-center gap-6">
-          <div>Grid Columns: <span id="info-columns" class="font-mono text-white">8</span></div>
-          <div>Images Placed: <span id="info-images-count" class="font-mono text-white">0</span></div>
-          <div>Visible Aspect: <span id="info-ratio" class="font-mono text-white">3:4</span></div>
+        <div class="footer">
+          <span>图片数：<code id="image-count">0</code></span>
+          <span>选区：<code id="selection-label">-</code></span>
         </div>
-        <div class="text-right">
-          Mode: <span id="info-mode-text" class="text-brand-400 font-medium">Resolving...</span>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Right Controls Panel (Scrollable settings) -->
-    <aside class="w-96 bg-slate-950 border-l border-slate-800 flex flex-col h-full shrink-0 overflow-y-auto">
-      
-      <!-- Tab Controls header -->
-      <div class="border-b border-slate-800 flex sticky top-0 bg-slate-950/95 backdrop-blur-md z-10">
-        <button id="tab-config" class="flex-1 py-3 px-4 text-sm font-medium border-b-2 border-brand-500 text-brand-400 flex items-center justify-center gap-2">
-          <i data-lucide="sliders" class="w-4 h-4"></i>
-          <span>Layout Config</span>
-        </button>
-        <button id="tab-images" class="flex-1 py-3 px-4 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 transition">
-          <i data-lucide="image" class="w-4 h-4"></i>
-          <span>Images</span>
-        </button>
-      </div>
-
-      <!-- Tab Content Area -->
-      <div class="flex-1 p-6 space-y-6">
-        
-        <!-- Tab 1: Layout Config -->
-        <div id="panel-config" class="space-y-6">
-          <!-- Aspect Ratios -->
-          <div class="space-y-3">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Aspect Ratios</h3>
-            
-            <!-- Container Ratio Selection -->
-            <div>
-              <label class="block text-xs text-slate-400 mb-1.5">Container Ratio (Width : Height)</label>
-              <select id="container-ratio" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
-                <option value="3:4" selected>Portrait (3:4)</option>
-                <option value="4:3">Landscape (4:3)</option>
-                <option value="1:1">Square (1:1)</option>
-                <option value="16:9">Widescreen (16:9)</option>
-                <option value="9:16">Story (9:16)</option>
-                <option value="2:3">Classic Film (2:3)</option>
-                <option value="custom">Custom Ratio</option>
+      <aside>
+        <div class="panel">
+          <h2>Core options</h2>
+          <div class="compact-row">
+            <div class="field">
+              <label for="container-ratio">容器比例</label>
+              <select id="container-ratio">
+                <option value="3:4">3:4</option>
+                <option value="1:1">1:1</option>
+                <option value="4:3">4:3</option>
+                <option value="16:9">16:9</option>
+                <option value="9:16">9:16</option>
               </select>
-              <!-- Custom inputs (Container) -->
-              <div id="custom-container-inputs" class="hidden grid grid-cols-2 gap-2 mt-2">
-                <div>
-                  <label class="block text-[10px] text-slate-500 mb-0.5">Width Value</label>
-                  <input type="number" id="custom-container-w" value="3" min="1" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-brand-500 font-mono">
-                </div>
-                <div>
-                  <label class="block text-[10px] text-slate-500 mb-0.5">Height Value</label>
-                  <input type="number" id="custom-container-h" value="4" min="1" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-brand-500 font-mono">
-                </div>
-              </div>
             </div>
-
-            <!-- Image Ratio Selection -->
-            <div>
-              <label class="block text-xs text-slate-400 mb-1.5">Individual Image Item Ratio</label>
-              <select id="image-ratio" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
-                <option value="16:9" selected>Landscape (16:9)</option>
-                <option value="4:3">Landscape Classic (4:3)</option>
-                <option value="1:1">Square (1:1)</option>
-                <option value="3:2">Photo Standard (3:2)</option>
-                <option value="custom">Custom Ratio</option>
-              </select>
-              <!-- Custom inputs (Image) -->
-              <div id="custom-image-inputs" class="hidden grid grid-cols-2 gap-2 mt-2">
-                <div>
-                  <label class="block text-[10px] text-slate-500 mb-0.5">Width Value</label>
-                  <input type="number" id="custom-image-w" value="16" min="1" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-brand-500 font-mono">
-                </div>
-                <div>
-                  <label class="block text-[10px] text-slate-500 mb-0.5">Height Value</label>
-                  <input type="number" id="custom-image-h" value="9" min="1" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-center focus:outline-none focus:border-brand-500 font-mono">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Grid Density & Metrics -->
-          <div class="space-y-4 border-t border-slate-800 pt-4">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Grid Settings</h3>
-            
-            <!-- Columns Density -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Grid Column Density</span>
-                <span id="columns-val" class="font-mono text-brand-400 font-semibold">8</span>
-              </div>
-              <input type="range" id="grid-columns" min="4" max="48" step="2" value="8" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-              <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-                <span>4 Cols</span>
-                <span>12</span>
-                <span>24</span>
-                <span>36</span>
-                <span>48 Cols</span>
-              </div>
-            </div>
-
-            <!-- Padding (2K scale) -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Edge Padding (at 2K width)</span>
-                <span id="padding-val" class="font-mono text-brand-400 font-semibold">60px</span>
-              </div>
-              <input type="range" id="padding-2k" min="0" max="200" step="5" value="60" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-            </div>
-
-            <!-- Gap (2K scale) -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Grid Gap (at 2K width)</span>
-                <span id="gap-val" class="font-mono text-brand-400 font-semibold">24px</span>
-              </div>
-              <input type="range" id="gap-2k" min="0" max="100" step="2" value="24" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-            </div>
-          </div>
-
-          <!-- Aesthetics -->
-          <div class="space-y-4 border-t border-slate-800 pt-4">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Background & Overlays</h3>
-            
-            <!-- Bg Color & Transparent Toggle -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs text-slate-400 mb-1">Background Color</label>
-                <div class="flex items-center gap-2">
-                  <input type="color" id="bg-color" value="#ffffff" class="w-8 h-8 rounded border border-slate-800 cursor-pointer bg-transparent">
-                  <input type="text" id="bg-color-text" value="#ffffff" class="w-20 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs font-mono uppercase text-center focus:outline-none focus:border-brand-500">
-                </div>
-              </div>
-              <div class="flex flex-col justify-end">
-                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400 select-none mb-2">
-                  <input type="checkbox" id="transparent-bg" class="rounded bg-slate-900 border-slate-800 text-brand-500 focus:ring-brand-500 focus:ring-offset-slate-950">
-                  <span>Transparent BG</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Gridlines and Size selection -->
-            <div class="flex items-center justify-between">
-              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400 select-none">
-                <input type="checkbox" id="show-gridlines" checked class="rounded bg-slate-900 border-slate-800 text-brand-500 focus:ring-brand-500 focus:ring-offset-slate-950">
-                <span>Show Helper Gridlines</span>
-              </label>
-            </div>
-
-            <!-- Placement size -->
-            <div>
-              <label class="block text-xs text-slate-400 mb-1.5">Default Slot Size (Grid Span)</label>
-              <select id="placement-size" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
-                <option value="small">Small</option>
-                <option value="medium" selected>Medium</option>
-                <option value="large">Large</option>
+            <div class="field">
+              <label for="image-ratio">图片比例</label>
+              <select id="image-ratio">
+                <option value="16:9">16:9</option>
+                <option value="4:3">4:3</option>
+                <option value="1:1">1:1</option>
+                <option value="3:2">3:2</option>
               </select>
             </div>
           </div>
 
-          <!-- Image Styling (Card Aesthetics) -->
-          <div class="space-y-4 border-t border-slate-800 pt-4">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Image Card Aesthetics</h3>
-            
-            <!-- Border Radius -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Border Radius (at 2K width)</span>
-                <span id="radius-val" class="font-mono text-brand-400 font-semibold">24px</span>
-              </div>
-              <input type="range" id="image-radius-2k" min="0" max="120" step="4" value="24" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
+          <div class="compact-row">
+            <div class="field">
+              <label for="padding-2k">Padding：<code id="padding-value">60</code></label>
+              <input id="padding-2k" type="range" min="0" max="180" step="5" value="60">
             </div>
-
-            <!-- Shadow Blur -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Blur (at 2K width)</span>
-                <span id="shadow-blur-val" class="font-mono text-brand-400 font-semibold">0px</span>
-              </div>
-              <input type="range" id="image-shadow-blur-2k" min="0" max="100" step="2" value="0" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
+            <div class="field">
+              <label for="gap-2k">Gap：<code id="gap-value">24</code></label>
+              <input id="gap-2k" type="range" min="0" max="80" step="2" value="24">
             </div>
+          </div>
 
-            <!-- Shadow Offset -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Offset (at 2K width)</span>
-                <span id="shadow-offset-val" class="font-mono text-brand-400 font-semibold">0px</span>
-              </div>
-              <input type="range" id="image-shadow-offset-2k" min="0" max="50" step="1" value="0" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
+          <div class="compact-row">
+            <div class="field">
+              <label for="bg-color">背景色</label>
+              <input id="bg-color" type="color" value="#ffffff">
             </div>
+            <div class="check-field">
+              <label for="transparent-bg">背景透明</label>
+              <input id="transparent-bg" type="checkbox">
+            </div>
+          </div>
 
-            <!-- Shadow Opacity -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Opacity</span>
-                <span id="shadow-opacity-val" class="font-mono text-brand-400 font-semibold">20%</span>
-              </div>
-              <input type="range" id="image-shadow-opacity" min="0" max="1" step="0.05" value="0.2" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
+          <div class="compact-row">
+            <div class="field">
+              <label for="placement-preset">插入预设</label>
+              <select id="placement-preset">
+                <option value="small">small</option>
+                <option value="medium" selected>medium</option>
+                <option value="large">large</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="grid-columns">网格列数：<code id="grid-columns-value">8</code></label>
+              <input id="grid-columns" type="range" min="4" max="48" step="2" value="8">
+            </div>
+          </div>
+
+          <div class="compact-row">
+            <div class="field">
+              <label for="border-radius-2k">图片圆角：<code id="border-radius-value">24</code></label>
+              <input id="border-radius-2k" type="range" min="0" max="120" step="2" value="24">
+            </div>
+            <div class="field">
+              <label for="shadow-blur-2k">阴影模糊：<code id="shadow-blur-value">0</code></label>
+              <input id="shadow-blur-2k" type="range" min="0" max="120" step="2" value="0">
+            </div>
+          </div>
+          <div class="compact-row">
+            <div class="field">
+              <label for="shadow-offset-2k">阴影偏移：<code id="shadow-offset-value">0</code></label>
+              <input id="shadow-offset-2k" type="range" min="0" max="80" step="2" value="0">
+            </div>
+            <div class="field">
+              <label for="shadow-opacity">阴影透明：<code id="shadow-opacity-value">0.2</code></label>
+              <input id="shadow-opacity" type="range" min="0" max="1" step="0.05" value="0.2">
             </div>
           </div>
         </div>
 
-        <!-- Tab 2: Images Upload & Gallery -->
-        <div id="panel-images" class="hidden space-y-6">
-          <div class="space-y-4">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Upload Local Images</h3>
-            <!-- Drag & Drop Uploader Area -->
-            <label id="upload-zone" class="flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-brand-500/50 hover:bg-slate-900/30 rounded-xl py-6 px-4 cursor-pointer text-center group transition">
-              <input type="file" id="file-uploader" multiple accept="image/*" class="hidden">
-              <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:bg-brand-500/10 group-hover:text-brand-400 transition">
-                <i data-lucide="upload" class="w-5 h-5 text-slate-400 group-hover:text-brand-400"></i>
-              </div>
-              <span class="text-sm font-medium text-slate-200">Select files or drop here</span>
-              <span class="text-xs text-slate-500 mt-1">Accepts multiple PNG, JPG, WebP</span>
-            </label>
+        <div class="panel">
+          <h2>Editor actions</h2>
+          <p class="action-hint">拖入图片到画布插入；Ctrl/Cmd + 单击多选；方向键移动；Ctrl/Cmd + 上下调整尺寸；Delete 删除。</p>
+          <div class="actions">
+            <button class="primary" id="pick-files">插入图片</button>
+            <button class="secondary" id="replace-active">替换选中</button>
+            <button class="danger" id="delete-selection">删除选区</button>
+            <button class="secondary" id="clear-selection">清空选区</button>
+            <button class="secondary" id="export-png">导出 PNG</button>
           </div>
-
-          <!-- Sample Image Presets Gallery -->
-          <div class="space-y-3 border-t border-slate-800 pt-4">
-            <div class="flex justify-between items-center">
-              <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Sample Preset Photos</h3>
-              <button id="add-all-presets" class="text-xs text-brand-400 hover:text-brand-300 font-medium">Add All</button>
-            </div>
-            <div class="grid grid-cols-3 gap-2" id="preset-gallery">
-              <!-- Preset thumbnails populated by script -->
-            </div>
-          </div>
-
-          <!-- Placed Images list -->
-          <div class="space-y-3 border-t border-slate-800 pt-4">
-            <h3 class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Placed Image Blocks</h3>
-            <div class="space-y-2 max-h-48 overflow-y-auto" id="placed-images-list">
-              <!-- Dynamic Placed Image list items -->
-            </div>
-          </div>
+          <input id="file-input" type="file" accept="image/*" multiple hidden>
+          <input id="replace-input" type="file" accept="image/*" hidden>
         </div>
 
-        <!-- Selected Image Editor Card (Floating layout settings for active selection) -->
-        <div id="selected-image-card" class="bg-gradient-to-tr from-slate-900 to-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-4 shadow-xl hidden">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
-            <div class="flex items-center gap-2">
-              <i data-lucide="image" class="w-4 h-4 text-brand-400"></i>
-              <span class="text-xs font-semibold text-slate-300">Selected Image Node</span>
-            </div>
-            <button id="action-delete" class="text-red-400 hover:text-red-300 text-xs flex items-center gap-1 transition">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              <span>Remove</span>
-            </button>
-          </div>
-
-          <!-- Span Size controls -->
-          <div>
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <span class="text-slate-400">Grid Span Scale</span>
-              <span id="active-span-val" class="font-mono text-white font-semibold">2 &times; 2</span>
-            </div>
-            <div class="flex gap-2">
-              <button id="action-span-dec" class="flex-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 py-1.5 rounded-lg border border-slate-700 text-sm font-semibold transition flex items-center justify-center gap-1">
-                <i data-lucide="minus" class="w-4 h-4"></i> Shrink
-              </button>
-              <button id="action-span-inc" class="flex-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 py-1.5 rounded-lg border border-slate-700 text-sm font-semibold transition flex items-center justify-center gap-1">
-                <i data-lucide="plus" class="w-4 h-4"></i> Expand
-              </button>
-            </div>
-          </div>
-
-          <!-- Stepper D-pad movement keys -->
-          <div>
-            <span class="block text-xs text-slate-400 mb-2">Micro-Step Grid Shift</span>
-            <div class="flex flex-col items-center gap-1.5">
-              <!-- Up Arrow -->
-              <button id="step-up" class="w-10 h-9 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-lg border border-slate-700 transition flex items-center justify-center">
-                <i data-lucide="chevron-up" class="w-5 h-5"></i>
-              </button>
-              <div class="flex gap-4">
-                <!-- Left Arrow -->
-                <button id="step-left" class="w-10 h-9 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-lg border border-slate-700 transition flex items-center justify-center">
-                  <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                </button>
-                <div class="w-10 h-9 bg-slate-900 border border-slate-800/80 rounded-lg flex items-center justify-center text-[10px] font-mono text-slate-500">
-                  D-Pad
-                </div>
-                <!-- Right Arrow -->
-                <button id="step-right" class="w-10 h-9 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-lg border border-slate-700 transition flex items-center justify-center">
-                  <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                </button>
-              </div>
-              <!-- Down Arrow -->
-              <button id="step-down" class="w-10 h-9 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-lg border border-slate-700 transition flex items-center justify-center">
-                <i data-lucide="chevron-down" class="w-5 h-5"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Individual Image Aesthetics -->
-          <div class="space-y-4 border-t border-slate-800 pt-3">
-            <span class="block text-xs font-semibold text-slate-400 tracking-wider uppercase">Individual Aesthetics</span>
-            
-            <!-- Border Radius -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Corner Radius</span>
-                <span id="active-radius-val" class="font-mono text-brand-400 font-semibold">Use Global</span>
-              </div>
-              <input type="range" id="active-image-radius-2k" min="-1" max="120" step="1" value="-1" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-              <span class="block text-[10px] text-slate-500 mt-0.5">Value -1 uses global configuration.</span>
-            </div>
-
-            <!-- Shadow Blur -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Blur</span>
-                <span id="active-shadow-blur-val" class="font-mono text-brand-400 font-semibold">Use Global</span>
-              </div>
-              <input type="range" id="active-image-shadow-blur-2k" min="-1" max="100" step="1" value="-1" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-            </div>
-
-            <!-- Shadow Offset -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Offset</span>
-                <span id="active-shadow-offset-val" class="font-mono text-brand-400 font-semibold">Use Global</span>
-              </div>
-              <input type="range" id="active-image-shadow-offset-2k" min="-1" max="50" step="1" value="-1" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-            </div>
-
-            <!-- Shadow Opacity -->
-            <div>
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
-                <span>Shadow Opacity</span>
-                <span id="active-shadow-opacity-val" class="font-mono text-brand-400 font-semibold">Use Global</span>
-              </div>
-              <input type="range" id="active-image-shadow-opacity" min="-0.05" max="1" step="0.05" value="-0.05" class="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-brand-500">
-            </div>
-          </div>
-
-          <!-- Shift row layout below -->
-          <div class="space-y-2 border-t border-slate-800 pt-3">
-            <span class="block text-xs text-slate-400">Shift All Rows Below</span>
-            <div class="grid grid-cols-2 gap-2">
-              <button id="action-pull-up" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-1.5 px-2.5 rounded-lg border border-slate-700 text-xs font-medium transition flex items-center justify-center gap-1">
-                <i data-lucide="chevrons-up" class="w-3.5 h-3.5"></i> Pull Up
-              </button>
-              <button id="action-push-down" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 py-1.5 px-2.5 rounded-lg border border-slate-700 text-xs font-medium transition flex items-center justify-center gap-1">
-                <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i> Push Down
-              </button>
-            </div>
-          </div>
+        <div class="panel">
+          <h2>Images from Core</h2>
+          <div class="image-list" id="image-list"></div>
         </div>
-
-        <!-- Inactive active image panel notice -->
-        <div id="editor-no-selection" class="bg-slate-900/30 border border-slate-800/80 border-dashed rounded-xl p-5 text-center text-slate-500">
-          <i data-lucide="mouse-pointer" class="w-6 h-6 text-slate-650 mx-auto mb-2"></i>
-          <span class="text-xs">Click on any placed photo in the canvas viewport to inspect, move, scale or remove.</span>
-        </div>
-
-      </div>
-
-      <!-- Footer Export Button sticky at bottom -->
-      <div class="border-t border-slate-800 p-6 bg-slate-950 sticky bottom-0 space-y-4">
-        <div>
-          <label class="block text-xs text-slate-400 mb-1.5">Export Quality (Width)</label>
-          <select id="export-res" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 font-mono">
-            <option value="1024">1024px (Standard Web)</option>
-            <option value="2048" selected>2048px (2K Quality)</option>
-            <option value="3072">3072px (Ultra-HD 3K)</option>
-            <option value="4096">4096px (High-Fidelity 4K)</option>
-          </select>
-        </div>
-        <button id="export-btn" class="w-full bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-brand-500/10 hover:shadow-brand-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span>Export Offscreen PNG</span>
-        </button>
-      </div>
-    </aside>
-  </main>
-
-  <!-- Export Modal Overlay -->
-  <div id="export-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-6 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden scale-95 transition-all duration-300">
-      
-      <!-- Modal Header -->
-      <div class="p-6 border-b border-slate-800 flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-display font-bold text-white flex items-center gap-2">
-            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-            <span>PNG Collage Generated Successfully</span>
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Below is the headless offscreen output, rendered cleanly at target scale.</p>
-        </div>
-        <button id="modal-close" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition flex items-center justify-center">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body (Split Preview) -->
-      <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Live Workspace Image (Scale reference) -->
-        <div class="space-y-2">
-          <span class="block text-xs font-semibold text-slate-400 tracking-wider uppercase">Live Canvas View (Editor UI)</span>
-          <div class="aspect-square bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center p-4">
-            <img id="modal-editor-preview" src="" class="max-h-full object-contain shadow-md">
-          </div>
-          <span class="block text-[10px] text-slate-500">Includes active highlight outline, helper gridlines and interactive markers.</span>
-        </div>
-
-        <!-- Exported Headless Image -->
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="block text-xs font-semibold text-slate-400 tracking-wider uppercase">Headless Raw Output (Clean)</span>
-            <span id="modal-size-tag" class="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-mono">2048 &times; 2730</span>
-          </div>
-          <div class="aspect-square checkerboard rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center p-4">
-            <img id="modal-export-preview" src="" class="max-h-full object-contain shadow-lg cursor-zoom-in" onclick="window.open(this.src)">
-          </div>
-          <span class="block text-[10px] text-slate-500">Clean composition with rounded corners, aspect bounds and transparent background handling.</span>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="p-6 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
-        <div class="text-xs text-slate-400 flex items-center gap-1.5">
-          <i data-lucide="info" class="w-4 h-4 text-brand-400"></i>
-          <span>Click the output preview to open full-size in a new window.</span>
-        </div>
-        <div class="flex gap-3">
-          <button id="modal-btn-close" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 px-5 rounded-xl border border-slate-700 text-sm font-semibold transition active:scale-95">
-            Close
-          </button>
-          <a id="modal-download" href="#" download="aspect-collage.png" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-2.5 px-6 rounded-xl shadow-lg shadow-emerald-500/15 text-sm font-semibold transition active:scale-95 flex items-center gap-2">
-            <i data-lucide="download" class="w-4 h-4"></i> Download Collage PNG
-          </a>
-        </div>
-      </div>
-
-    </div>
+      </aside>
+    </main>
   </div>
 
-  <!-- Main Application Script Loader (Dual Protocol Support) -->
-  <script>
-    // Define the application code inside a globally accessible function
-    window.initCollageApp = function(AspectGridCollageify) {
-      console.log("Initializing aspect-grid-collageify application with class:", AspectGridCollageify);
-      
-      // Preset Unsplash Image URLs for demo
-      const SAMPLE_PHOTOS = [
-        {
-          name: "Tropical Beach",
-          url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&h=450&q=80"
-        },
-        {
-          name: "Misty Mountains",
-          url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&h=450&q=80"
-        },
-        {
-          name: "Forest Trees",
-          url: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=800&h=450&q=80"
-        },
-        {
-          name: "Runner Athletic",
-          url: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&h=450&q=80"
-        },
-        {
-          name: "Green Fields",
-          url: "https://images.unsplash.com/photo-1472214222541-d510753a4907?auto=format&fit=crop&w=800&h=450&q=80"
-        },
-        {
-          name: "Valley Lake",
-          url: "https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=800&h=450&q=80"
-        }
-      ];
+  <script type="module">
+    import { CollageCore, CanvasCollageEditor } from "./src/index.ts";
 
-      // Seed initial placed images (3 images for preview)
-      let initialPlacedImages = [
-        {
-          id: "preset-img-1",
-          src: SAMPLE_PHOTOS[0].url,
-          name: "Tropical Beach",
-          gridX: 0,
-          gridY: 0,
-          span: 4
-        },
-        {
-          id: "preset-img-2",
-          src: SAMPLE_PHOTOS[1].url,
-          name: "Misty Mountains",
-          gridX: 4,
-          gridY: 0,
-          span: 4
-        },
-        {
-          id: "preset-img-3",
-          src: SAMPLE_PHOTOS[2].url,
-          name: "Forest Trees",
-          gridX: 2,
-          gridY: 4,
-          span: 4
-        }
-      ];
+    const canvas = document.getElementById("collage-canvas");
+    const status = document.getElementById("status");
+    const imageCount = document.getElementById("image-count");
+    const selectionLabel = document.getElementById("selection-label");
+    const imageList = document.getElementById("image-list");
+    const fileInput = document.getElementById("file-input");
+    const replaceInput = document.getElementById("replace-input");
 
-      const canvas = document.getElementById("collage-canvas");
-      let activeCellForUpload = null; // Track grid target for placeholder clicks
+    const core = new CollageCore({
+      containerRatio: "3:4",
+      imageRatio: "16:9",
+      gridColumns: 8,
+      padding2K: 60,
+      gap2K: 24,
+      background: {
+        color: "#ffffff",
+        transparent: false,
+      },
+      imageStyle: {
+        borderRadius2K: 24,
+        shadowBlur2K: 0,
+        shadowOffset2K: 0,
+        shadowOpacity: 0.2,
+      },
+      images: [],
+      placementPreset: "medium",
+    });
 
-      // Instantiate Collage engine config
-      const engineConfig = {
-        containerRatio: "3:4",
-        customContainerW: 3,
-        customContainerH: 4,
-        imageRatio: "16:9",
-        customImageW: 16,
-        customImageH: 9,
-        gridColumns: 8,
-        padding2K: 60,
-        gap2K: 24,
-        containerBgColor: "#ffffff",
-        useTransparentBg: false,
-        images: initialPlacedImages,
+    const editor = new CanvasCollageEditor(canvas, core, {
+      multiSelect: true,
+      keyboard: true,
+      dragMove: true,
+      dragSwap: true,
+      dragInsert: true,
+      quickReplace: true,
+      overlay: {
+        showBoundary: true,
         showGridlines: true,
-        placementSize: "medium"
-      };
+        showSlots: true,
+        slotText: "插入图片",
+      },
+    });
 
-      // Construct the engine
-      const engine = new AspectGridCollageify(engineConfig, canvas);
+    editor.on("change", renderState);
+    editor.on("selectionchange", renderState);
+    editor.on("activechange", renderState);
+    editor.on("cellclick", (placement) => {
+      editor.setPendingInsertPlacement(placement);
+      fileInput.click();
+    });
+    editor.on("replacerequest", () => replaceInput.click());
+    editor.on("error", (error) => {
+      console.error(error);
+      setStatus("Error");
+    });
 
-      // Initialize lucide icons
-      lucide.createIcons();
+    document.getElementById("pick-files").addEventListener("click", () => {
+      editor.setPendingInsertPlacement(null);
+      fileInput.click();
+    });
+    document.getElementById("replace-active").addEventListener("click", () => replaceInput.click());
+    document.getElementById("delete-selection").addEventListener("click", () => {
+      if (core.removeImages(editor.getSelection())) editor.clearSelection();
+    });
+    document.getElementById("clear-selection").addEventListener("click", () => editor.clearSelection());
+    document.getElementById("export-png").addEventListener("click", exportPng);
 
-      // ------------------------------------------------------------------
-      // Event Subscriptions
-      // ------------------------------------------------------------------
-      engine.onImagesChanged((images) => {
-        document.getElementById("info-images-count").innerText = images.length;
-        updatePlacedImagesList(images);
+    fileInput.addEventListener("change", async () => {
+      await editor.insertFiles(fileInput.files || []);
+      fileInput.value = "";
+    });
+
+    replaceInput.addEventListener("change", async () => {
+      const file = replaceInput.files?.[0];
+      if (file) await editor.replaceActiveFile(file);
+      replaceInput.value = "";
+    });
+
+    bindOption("container-ratio", (value) => ({ containerRatio: value }));
+    bindOption("image-ratio", (value) => ({ imageRatio: value }));
+    bindOption("placement-preset", (value) => ({ placementPreset: value }));
+    bindOption("bg-color", (value) => ({ background: { color: value, transparent: core.getOptions().background?.transparent || false } }));
+    bindCheckboxOption("transparent-bg", (checked) => ({ background: { ...core.getOptions().background, transparent: checked } }), syncCanvasBackground);
+    bindNumberOption("grid-columns", "grid-columns-value", (value) => ({ gridColumns: value }));
+    bindNumberOption("padding-2k", "padding-value", (value) => ({ padding2K: value }));
+    bindNumberOption("gap-2k", "gap-value", (value) => ({ gap2K: value }));
+    bindNumberOption("border-radius-2k", "border-radius-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, borderRadius2K: value } }));
+    bindNumberOption("shadow-blur-2k", "shadow-blur-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowBlur2K: value } }));
+    bindNumberOption("shadow-offset-2k", "shadow-offset-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowOffset2K: value } }));
+    bindNumberOption("shadow-opacity", "shadow-opacity-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowOpacity: value } }));
+
+    window.addEventListener("resize", updateCanvasRatio);
+    syncCanvasBackground();
+    updateCanvasRatio();
+    renderState();
+
+    function bindOption(id, toOptions) {
+      document.getElementById(id).addEventListener("input", (event) => {
+        core.updateOptions(toOptions(event.target.value));
+        updateCanvasRatio();
       });
+    }
 
-      engine.onActiveImageChanged((id) => {
-        const card = document.getElementById("selected-image-card");
-        const noSelect = document.getElementById("editor-no-selection");
-        const deselectBtn = document.getElementById("deselect-btn");
-
-        if (id) {
-          card.classList.remove("hidden");
-          noSelect.classList.add("hidden");
-          deselectBtn.classList.remove("hidden");
-
-          const img = engine.getImages().find(i => i.id === id);
-          if (img) {
-            document.getElementById("active-span-val").innerHTML = `${img.span} &times; ${img.span}`;
-
-            // Sync individual aesthetic sliders
-            const rVal = img.borderRadius2K !== undefined ? img.borderRadius2K : -1;
-            document.getElementById("active-image-radius-2k").value = rVal;
-            document.getElementById("active-radius-val").innerText = rVal === -1 ? "Use Global" : `${rVal}px`;
-
-            const bVal = img.shadowBlur2K !== undefined ? img.shadowBlur2K : -1;
-            document.getElementById("active-image-shadow-blur-2k").value = bVal;
-            document.getElementById("active-shadow-blur-val").innerText = bVal === -1 ? "Use Global" : `${bVal}px`;
-
-            const oVal = img.shadowOffset2K !== undefined ? img.shadowOffset2K : -1;
-            document.getElementById("active-image-shadow-offset-2k").value = oVal;
-            document.getElementById("active-shadow-offset-val").innerText = oVal === -1 ? "Use Global" : `${oVal}px`;
-
-            const opVal = img.shadowOpacity !== undefined ? img.shadowOpacity : -0.05;
-            document.getElementById("active-image-shadow-opacity").value = opVal;
-            document.getElementById("active-shadow-opacity-val").innerText = opVal === -0.05 ? "Use Global" : `${Math.round(opVal * 100)}%`;
-          }
-        } else {
-          card.classList.add("hidden");
-          noSelect.classList.remove("hidden");
-          deselectBtn.classList.add("hidden");
-        }
+    function bindNumberOption(id, valueId, toOptions) {
+      const input = document.getElementById(id);
+      const label = document.getElementById(valueId);
+      input.addEventListener("input", () => {
+        const value = Number(input.value);
+        label.textContent = String(value);
+        core.updateOptions(toOptions(value));
       });
+    }
 
-      // Handle clicking empty slot -> Add image at target cell
-      engine.onCellClicked((gridX, gridY) => {
-        activeCellForUpload = { gridX, gridY };
-        
-        // Trigger file picker
-        const uploader = document.getElementById("file-uploader");
-        uploader.click();
+    function bindCheckboxOption(id, toOptions, afterChange) {
+      const input = document.getElementById(id);
+      input.addEventListener("change", () => {
+        core.updateOptions(toOptions(input.checked));
+        afterChange?.();
       });
+    }
 
-      // ------------------------------------------------------------------
-      // Responsive Canvas Resize Observer
-      // ------------------------------------------------------------------
-      function resizeCanvas() {
-        const container = document.getElementById("canvas-container");
-        const wrapper = document.getElementById("canvas-wrapper");
-        
-        const pad = 32; // padding margins inside flex container
-        const maxW = container.clientWidth - pad;
-        const maxH = container.clientHeight - pad;
+    function syncCanvasBackground() {
+      canvas.classList.toggle("transparent-bg", !!core.getOptions().background?.transparent);
+    }
 
-        const config = engine.getConfig();
-        let containerRatioVal = 0.75;
-        
-        if (config.containerRatio === "custom") {
-          containerRatioVal = (config.customContainerW || 3) / (config.customContainerH || 4);
-        } else {
-          const parts = config.containerRatio.split(":");
-          containerRatioVal = Number(parts[0]) / Number(parts[1]);
-        }
-
-        let w = maxW;
-        let h = maxW / containerRatioVal;
-        
-        if (h > maxH) {
-          h = maxH;
-          w = maxH * containerRatioVal;
-        }
-
-        canvas.width = Math.round(w);
-        canvas.height = Math.round(h);
-        canvas.style.width = Math.round(w) + "px";
-        canvas.style.height = Math.round(h) + "px";
-
-        wrapper.style.width = Math.round(w) + "px";
-        wrapper.style.height = Math.round(h) + "px";
-
-        engine.render();
-
-        // Update UI Info
-        document.getElementById("info-columns").innerText = config.gridColumns;
-        document.getElementById("info-ratio").innerText = config.containerRatio === "custom" 
-          ? `${config.customContainerW}:${config.customContainerH}` 
-          : config.containerRatio;
+    function updateCanvasRatio() {
+      const ratio = core.getOptions().containerRatio;
+      const [w, h] = ratio.split(":").map(Number);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+        editor.resize();
+        return;
       }
 
-      const resizeObserver = new ResizeObserver(() => {
-        resizeCanvas();
-      });
-      resizeObserver.observe(document.getElementById("canvas-container"));
+      const shell = canvas.parentElement;
+      const shellRect = shell?.getBoundingClientRect();
+      const maxWidth = Math.max(240, (shellRect?.width || 0) - 32);
+      const maxHeight = Math.max(240, (shellRect?.height || 0) - 32);
+      const ratioValue = w / h;
+      const widthByHeight = maxHeight * ratioValue;
+      const canvasWidth = Math.min(maxWidth, widthByHeight);
+      const canvasHeight = canvasWidth / ratioValue;
 
-      // ------------------------------------------------------------------
-      // Tab switching controls
-      // ------------------------------------------------------------------
-      const tabConfig = document.getElementById("tab-config");
-      const tabImages = document.getElementById("tab-images");
-      const panelConfig = document.getElementById("panel-config");
-      const panelImages = document.getElementById("panel-images");
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+      canvas.style.aspectRatio = `${w} / ${h}`;
+      editor.resize();
+    }
 
-      tabConfig.addEventListener("click", () => {
-        tabConfig.className = "flex-1 py-3 px-4 text-sm font-medium border-b-2 border-brand-500 text-brand-400 flex items-center justify-center gap-2";
-        tabImages.className = "flex-1 py-3 px-4 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 transition";
-        panelConfig.classList.remove("hidden");
-        panelImages.classList.add("hidden");
-      });
-
-      tabImages.addEventListener("click", () => {
-        tabImages.className = "flex-1 py-3 px-4 text-sm font-medium border-b-2 border-brand-500 text-brand-400 flex items-center justify-center gap-2";
-        tabConfig.className = "flex-1 py-3 px-4 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2 transition";
-        panelImages.classList.remove("hidden");
-        panelConfig.classList.add("hidden");
-      });
-
-      // ------------------------------------------------------------------
-      // Config controls binding
-      // ------------------------------------------------------------------
-      
-      // 1. Container Ratio
-      const containerSelect = document.getElementById("container-ratio");
-      const customContainerWInput = document.getElementById("custom-container-w");
-      const customContainerHInput = document.getElementById("custom-container-h");
-      const customContainerInputs = document.getElementById("custom-container-inputs");
-
-      containerSelect.addEventListener("change", (e) => {
-        const val = e.target.value;
-        if (val === "custom") {
-          customContainerInputs.classList.remove("hidden");
-        } else {
-          customContainerInputs.classList.add("hidden");
-        }
-        engine.updateConfig({ containerRatio: val });
-        resizeCanvas();
-      });
-
-      const triggerCustomContainerUpdate = () => {
-        engine.updateConfig({
-          customContainerW: Number(customContainerWInput.value) || 3,
-          customContainerH: Number(customContainerHInput.value) || 4
-        });
-        resizeCanvas();
-      };
-      customContainerWInput.addEventListener("input", triggerCustomContainerUpdate);
-      customContainerHInput.addEventListener("input", triggerCustomContainerUpdate);
-
-      // 2. Image Ratio
-      const imageSelect = document.getElementById("image-ratio");
-      const customImageWInput = document.getElementById("custom-image-w");
-      const customImageHInput = document.getElementById("custom-image-h");
-      const customImageInputs = document.getElementById("custom-image-inputs");
-
-      imageSelect.addEventListener("change", (e) => {
-        const val = e.target.value;
-        if (val === "custom") {
-          customImageInputs.classList.remove("hidden");
-        } else {
-          customImageInputs.classList.add("hidden");
-        }
-        engine.updateConfig({ imageRatio: val });
-        resizeCanvas();
-      });
-
-      const triggerCustomImageUpdate = () => {
-        engine.updateConfig({
-          customImageW: Number(customImageWInput.value) || 16,
-          customImageH: Number(customImageHInput.value) || 9
-        });
-        resizeCanvas();
-      };
-      customImageWInput.addEventListener("input", triggerCustomImageUpdate);
-      customImageHInput.addEventListener("input", triggerCustomImageUpdate);
-
-      // 3. Grid Columns density
-      const columnsSlider = document.getElementById("grid-columns");
-      columnsSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("columns-val").innerText = val;
-        engine.updateConfig({ gridColumns: val });
-        resizeCanvas();
-      });
-
-      // 4. Edge Padding
-      const paddingSlider = document.getElementById("padding-2k");
-      paddingSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("padding-val").innerText = `${val}px`;
-        engine.updateConfig({ padding2K: val });
-      });
-
-      // 5. Gap
-      const gapSlider = document.getElementById("gap-2k");
-      gapSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("gap-val").innerText = `${val}px`;
-        engine.updateConfig({ gap2K: val });
-      });
-
-      // 6. Background options
-      const bgColorInput = document.getElementById("bg-color");
-      const bgColorTextInput = document.getElementById("bg-color-text");
-      const transparentBgCheckbox = document.getElementById("transparent-bg");
-
-      const syncBgColor = (hex) => {
-        bgColorInput.value = hex;
-        bgColorTextInput.value = hex;
-        engine.updateConfig({ containerBgColor: hex });
-      };
-
-      bgColorInput.addEventListener("input", (e) => syncBgColor(e.target.value));
-      bgColorTextInput.addEventListener("input", (e) => {
-        let val = e.target.value;
-        if (!val.startsWith("#")) val = "#" + val;
-        if (/^#[0-9A-F]{6}$/i.test(val)) {
-          syncBgColor(val);
-        }
-      });
-
-      transparentBgCheckbox.addEventListener("change", (e) => {
-        engine.updateConfig({ useTransparentBg: e.target.checked });
-      });
-
-      // 7. Gridlines & Placement Size
-      document.getElementById("show-gridlines").addEventListener("change", (e) => {
-        engine.updateConfig({ showGridlines: e.target.checked });
-      });
-
-      document.getElementById("placement-size").addEventListener("change", (e) => {
-        engine.updateConfig({ placementSize: e.target.value });
-      });
-
-      // 8. Image Styling (Border Radius & Shadow)
-      const radiusSlider = document.getElementById("image-radius-2k");
-      radiusSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("radius-val").innerText = `${val}px`;
-        engine.updateConfig({ imageBorderRadius2K: val });
-      });
-
-      const shadowBlurSlider = document.getElementById("image-shadow-blur-2k");
-      shadowBlurSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("shadow-blur-val").innerText = `${val}px`;
-        engine.updateConfig({ imageShadowBlur2K: val });
-      });
-
-      const shadowOffsetSlider = document.getElementById("image-shadow-offset-2k");
-      shadowOffsetSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        document.getElementById("shadow-offset-val").innerText = `${val}px`;
-        engine.updateConfig({ imageShadowOffset2K: val });
-      });
-
-      const shadowOpacitySlider = document.getElementById("image-shadow-opacity");
-      shadowOpacitySlider.addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        document.getElementById("shadow-opacity-val").innerText = `${Math.round(val * 100)}%`;
-        engine.updateConfig({ imageShadowOpacity: val });
-      });
-
-      // Deselect
-      document.getElementById("deselect-btn").addEventListener("click", () => {
-        engine.setActiveImageId(null);
-      });
-
-      // ------------------------------------------------------------------
-      // Active Selected Image Manipulation actions
-      // ------------------------------------------------------------------
-      
-      // 1. Delete image
-      document.getElementById("action-delete").addEventListener("click", () => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          engine.removeImage(activeId);
-        }
-      });
-
-      // 2. Span Modification
-      document.getElementById("action-span-dec").addEventListener("click", () => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const layout = engine.calculateLayout(canvas.width, canvas.height);
-          engine.modifyImageSpan(activeId, -1, layout.gridRows);
-          // Refresh text
-          const img = engine.getImages().find(i => i.id === activeId);
-          if (img) {
-            document.getElementById("active-span-val").innerHTML = `${img.span} &times; ${img.span}`;
-          }
-        }
-      });
-
-      document.getElementById("action-span-inc").addEventListener("click", () => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const layout = engine.calculateLayout(canvas.width, canvas.height);
-          engine.modifyImageSpan(activeId, 1, layout.gridRows);
-          // Refresh text
-          const img = engine.getImages().find(i => i.id === activeId);
-          if (img) {
-            document.getElementById("active-span-val").innerHTML = `${img.span} &times; ${img.span}`;
-          }
-        }
-      });
-
-      // 2.5 Individual Aesthetics sliders
-      const activeRadiusSlider = document.getElementById("active-image-radius-2k");
-      activeRadiusSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const updates = val === -1 ? { borderRadius2K: undefined } : { borderRadius2K: val };
-          engine.updateImage(activeId, updates);
-          document.getElementById("active-radius-val").innerText = val === -1 ? "Use Global" : `${val}px`;
-        }
-      });
-
-      const activeShadowBlurSlider = document.getElementById("active-image-shadow-blur-2k");
-      activeShadowBlurSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const updates = val === -1 ? { shadowBlur2K: undefined } : { shadowBlur2K: val };
-          engine.updateImage(activeId, updates);
-          document.getElementById("active-shadow-blur-val").innerText = val === -1 ? "Use Global" : `${val}px`;
-        }
-      });
-
-      const activeShadowOffsetSlider = document.getElementById("active-image-shadow-offset-2k");
-      activeShadowOffsetSlider.addEventListener("input", (e) => {
-        const val = parseInt(e.target.value, 10);
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const updates = val === -1 ? { shadowOffset2K: undefined } : { shadowOffset2K: val };
-          engine.updateImage(activeId, updates);
-          document.getElementById("active-shadow-offset-val").innerText = val === -1 ? "Use Global" : `${val}px`;
-        }
-      });
-
-      const activeShadowOpacitySlider = document.getElementById("active-image-shadow-opacity");
-      activeShadowOpacitySlider.addEventListener("input", (e) => {
-        const val = parseFloat(e.target.value);
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const updates = val === -0.05 ? { shadowOpacity: undefined } : { shadowOpacity: val };
-          engine.updateImage(activeId, updates);
-          document.getElementById("active-shadow-opacity-val").innerText = val === -0.05 ? "Use Global" : `${Math.round(val * 100)}%`;
-        }
-      });
-
-      // 3. Movement D-pad Step actions
-      const stepMove = (dir) => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const layout = engine.calculateLayout(canvas.width, canvas.height);
-          engine.stepImagePosition(activeId, dir, layout.gridRows);
-        }
-      };
-
-      document.getElementById("step-up").addEventListener("click", () => stepMove("up"));
-      document.getElementById("step-down").addEventListener("click", () => stepMove("down"));
-      document.getElementById("step-left").addEventListener("click", () => stepMove("left"));
-      document.getElementById("step-right").addEventListener("click", () => stepMove("right"));
-
-      // 4. Shift operations
-      document.getElementById("action-push-down").addEventListener("click", () => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          const layout = engine.calculateLayout(canvas.width, canvas.height);
-          engine.pushDownBelow(activeId, layout.gridRows);
-        }
-      });
-
-      document.getElementById("action-pull-up").addEventListener("click", () => {
-        const activeId = engine.getActiveImageId();
-        if (activeId) {
-          engine.pullUpBelow(activeId);
-        }
-      });
-
-      // ------------------------------------------------------------------
-      // Image Uploading / Local Dropping & Preset Seeding
-      // ------------------------------------------------------------------
-      
-      // File handler helper
-      const handleFiles = (files) => {
-        const config = engine.getConfig();
-        const layout = engine.calculateLayout(canvas.width, canvas.height);
-        
-        Array.from(files).forEach((file) => {
-          if (!file.type.startsWith("image/")) return;
-
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const imgUrl = e.target.result;
-            
-            let gridX = 0;
-            let gridY = 0;
-            
-            // Get span size based on current config setting
-            const placementSizeVal = config.placementSize || "medium";
-            const span = (() => {
-              const cols = config.gridColumns;
-              const s = Math.max(1, Math.floor(cols / 4));
-              const m = Math.min(cols, Math.max(s + 1, Math.floor(cols / 3)));
-              const l = Math.min(cols, Math.max(m + 1, Math.floor(cols / 2)));
-              return { small: s, medium: m, large: l }[placementSizeVal];
-            })();
-
-            // If click-to-upload placeholder target is available, use it!
-            if (activeCellForUpload) {
-              gridX = activeCellForUpload.gridX;
-              gridY = activeCellForUpload.gridY;
-              activeCellForUpload = null; // reset
-            } else {
-              // Find first available placeholder slot
-              const slots = engine.getPlaceholders(span, layout.gridRows);
-              if (slots.length > 0) {
-                gridX = slots[0].gridX;
-                gridY = slots[0].gridY;
-              } else {
-                // Place at bottom (outside currently calculated rows)
-                gridX = 0;
-                gridY = layout.gridRows;
-              }
-            }
-
-            const newPlacedImage = {
-              id: "local-img-" + Math.random().toString(36).substr(2, 9),
-              src: imgUrl,
-              name: file.name,
-              gridX,
-              gridY,
-              span
-            };
-
-            engine.addImage(newPlacedImage);
-          };
-          reader.readAsDataURL(file);
-        });
-      };
-
-      // 1. Local File Select input
-      document.getElementById("file-uploader").addEventListener("change", (e) => {
-        handleFiles(e.target.files);
-      });
-
-      // 2. Drag and drop events on upload zone
-      const uploadZone = document.getElementById("upload-zone");
-      ["dragenter", "dragover"].forEach(eventName => {
-        uploadZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          uploadZone.classList.add("border-brand-500", "bg-slate-900/50");
-        }, false);
-      });
-
-      ["dragleave", "drop"].forEach(eventName => {
-        uploadZone.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          uploadZone.classList.remove("border-brand-500", "bg-slate-900/50");
-        }, false);
-      });
-
-      uploadZone.addEventListener("drop", (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
-      });
-
-      // 3. Render Sample Preset Gallery list
-      const galleryContainer = document.getElementById("preset-gallery");
-      galleryContainer.innerHTML = "";
-      SAMPLE_PHOTOS.forEach((photo) => {
-        const div = document.createElement("div");
-        div.className = "group relative aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-800 hover:border-brand-500 cursor-pointer transition shadow-sm";
-        div.innerHTML = `
-          <img src="${photo.url}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-80 group-hover:opacity-100" alt="${photo.name}">
-          <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-            <i data-lucide="plus" class="w-4 h-4 text-white"></i>
+    function renderState() {
+      const images = core.getImages();
+      const selection = editor.getSelection();
+      imageCount.textContent = String(images.length);
+      selectionLabel.textContent = selection.length ? selection.join(", ") : "-";
+      imageList.innerHTML = images.length
+        ? images.map((image) => `
+          <div class="image-item">
+            <div>
+              <strong>${escapeHtml(image.name)}</strong>
+              <div class="muted">${image.gridX}, ${image.gridY} · span ${image.span}</div>
+            </div>
+            <button data-select="${image.id}">选中</button>
           </div>
-        `;
-        div.addEventListener("click", () => {
-          const layout = engine.calculateLayout(canvas.width, canvas.height);
-          const config = engine.getConfig();
-          const placementSizeVal = config.placementSize || "medium";
-          const span = (() => {
-            const cols = config.gridColumns;
-            const s = Math.max(1, Math.floor(cols / 4));
-            const m = Math.min(cols, Math.max(s + 1, Math.floor(cols / 3)));
-            const l = Math.min(cols, Math.max(m + 1, Math.floor(cols / 2)));
-            return { small: s, medium: m, large: l }[placementSizeVal];
-          })();
+        `).join("")
+        : '<div class="muted">暂无图片。点击占位格或拖入文件。</div>';
 
-          const slots = engine.getPlaceholders(span, layout.gridRows);
-          let gridX = 0;
-          let gridY = 0;
-          if (slots.length > 0) {
-            gridX = slots[0].gridX;
-            gridY = slots[0].gridY;
-          } else {
-            gridX = 0;
-            gridY = layout.gridRows;
-          }
-
-          engine.addImage({
-            id: "preset-" + Math.random().toString(36).substr(2, 9),
-            src: photo.url,
-            name: photo.name,
-            gridX,
-            gridY,
-            span
-          });
-        });
-        galleryContainer.appendChild(div);
+      imageList.querySelectorAll("[data-select]").forEach((button) => {
+        button.addEventListener("click", () => editor.setActiveId(button.dataset.select));
       });
+    }
 
-      // Add all presets
-      document.getElementById("add-all-presets").addEventListener("click", () => {
-        let delay = 0;
-        SAMPLE_PHOTOS.forEach((photo) => {
-          setTimeout(() => {
-            const layout = engine.calculateLayout(canvas.width, canvas.height);
-            const config = engine.getConfig();
-            const placementSizeVal = config.placementSize || "medium";
-            const span = (() => {
-              const cols = config.gridColumns;
-              const s = Math.max(1, Math.floor(cols / 4));
-              const m = Math.min(cols, Math.max(s + 1, Math.floor(cols / 3)));
-              const l = Math.min(cols, Math.max(m + 1, Math.floor(cols / 2)));
-              return { small: s, medium: m, large: l }[placementSizeVal];
-            })();
+    async function exportPng() {
+      setStatus("Exporting...");
+      const dataUrl = await core.exportPNG(2048);
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = "collage.png";
+      link.click();
+      setStatus("Ready");
+    }
 
-            const slots = engine.getPlaceholders(span, layout.gridRows);
-            let gridX = 0;
-            let gridY = 0;
-            if (slots.length > 0) {
-              gridX = slots[0].gridX;
-              gridY = slots[0].gridY;
-            } else {
-              gridX = 0;
-              gridY = layout.gridRows;
-            }
+    function setStatus(text) {
+      status.textContent = text;
+    }
 
-            engine.addImage({
-              id: "preset-" + Math.random().toString(36).substr(2, 9),
-              src: photo.url,
-              name: photo.name,
-              gridX,
-              gridY,
-              span
-            });
-          }, delay);
-          delay += 50; // slight delay to calculate layout consecutively
-        });
-      });
-
-      // ------------------------------------------------------------------
-      // Placed Images Sidebar List Renderer
-      // ------------------------------------------------------------------
-      function updatePlacedImagesList(images) {
-        const container = document.getElementById("placed-images-list");
-        container.innerHTML = "";
-
-        if (images.length === 0) {
-          container.innerHTML = `
-            <div class="text-xs text-slate-500 text-center py-4 border border-dashed border-slate-800 rounded-lg">
-              No image blocks placed.
-            </div>
-          `;
-          return;
-        }
-
-        images.forEach((img) => {
-          const isActive = engine.getActiveImageId() === img.id;
-          const item = document.createElement("div");
-          item.className = `flex items-center justify-between p-2 rounded-lg border text-xs transition cursor-pointer select-none ${
-            isActive 
-              ? "bg-brand-500/10 border-brand-500/40 text-brand-300 font-medium" 
-              : "bg-slate-900 border-slate-800/80 text-slate-300 hover:bg-slate-850 hover:border-slate-700"
-          }`;
-          
-          item.innerHTML = `
-            <div class="flex items-center gap-2 truncate flex-1 mr-2">
-              <img src="${img.src}" class="w-8 h-8 rounded object-cover bg-slate-950 border border-slate-800 shrink-0">
-              <div class="truncate">
-                <p class="font-medium truncate text-slate-200">${img.name}</p>
-                <p class="text-[10px] text-slate-400 font-mono">Pos: (${img.gridX}, ${img.gridY}) | Span: ${img.span}</p>
-              </div>
-            </div>
-            <button class="text-slate-400 hover:text-red-400 p-1 shrink-0 rounded hover:bg-slate-800/50 transition" title="Delete">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
-          `;
-
-          // Click list item -> set active
-          item.addEventListener("click", (e) => {
-            if (e.target.closest("button")) {
-              engine.removeImage(img.id);
-            } else {
-              engine.setActiveImageId(img.id);
-            }
-          });
-
-          container.appendChild(item);
-        });
-
-        // Rerender newly inserted icons
-        lucide.createIcons();
-      }
-
-      // ------------------------------------------------------------------
-      // Offscreen PNG Exporter Modal Flow
-      // ------------------------------------------------------------------
-      const exportBtn = document.getElementById("export-btn");
-      const exportModal = document.getElementById("export-modal");
-      const modalClose = document.getElementById("modal-close");
-      const modalBtnClose = document.getElementById("modal-btn-close");
-      const modalEditorPreview = document.getElementById("modal-editor-preview");
-      const modalExportPreview = document.getElementById("modal-export-preview");
-      const modalSizeTag = document.getElementById("modal-size-tag");
-      const modalDownload = document.getElementById("modal-download");
-
-      exportBtn.addEventListener("click", async () => {
-        exportBtn.disabled = true;
-        const originalText = exportBtn.innerHTML;
-        exportBtn.innerHTML = `
-          <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
-          <span>Rendering Offscreen PNG...</span>
-        `;
-
-        try {
-          const targetWidth = parseInt(document.getElementById("export-res").value, 10);
-          
-          // 1. Get Live Editor Preview (capture canvas as-is)
-          const editorBase64 = canvas.toDataURL("image/png");
-          modalEditorPreview.src = editorBase64;
-
-          // 2. Perform Headless Offscreen Clean Draw
-          const exportBase64 = await engine.exportPNG(targetWidth);
-          modalExportPreview.src = exportBase64;
-
-          // Get calculated size for tag
-          const config = engine.getConfig();
-          let ratioVal = 0.75;
-          if (config.containerRatio === "custom") {
-            ratioVal = (config.customContainerW || 3) / (config.customContainerH || 4);
-          } else {
-            const parts = config.containerRatio.split(":");
-            ratioVal = Number(parts[0]) / Number(parts[1]);
-          }
-          const targetHeight = Math.round(targetWidth / ratioVal);
-          modalSizeTag.innerText = `${targetWidth} × ${targetHeight} px`;
-
-          // Set up download anchor
-          modalDownload.href = exportBase64;
-          modalDownload.download = `aspect-collage-${targetWidth}x${targetHeight}.png`;
-
-          // Display Modal
-          exportModal.classList.remove("hidden");
-          exportModal.querySelector(".bg-slate-900").classList.remove("scale-95");
-          exportModal.querySelector(".bg-slate-900").classList.add("scale-100");
-        } catch (err) {
-          console.error("Export failed:", err);
-          alert("An error occurred during offscreen rendering: " + err.message);
-        } finally {
-          exportBtn.disabled = false;
-          exportBtn.innerHTML = originalText;
-        }
-      });
-
-      const hideModal = () => {
-        exportModal.classList.add("hidden");
-        exportModal.querySelector(".bg-slate-900").classList.remove("scale-100");
-        exportModal.querySelector(".bg-slate-900").classList.add("scale-95");
-      };
-
-      modalClose.addEventListener("click", hideModal);
-      modalBtnClose.addEventListener("click", hideModal);
-
-      // ------------------------------------------------------------------
-      // Initial triggers
-      // ------------------------------------------------------------------
-      updatePlacedImagesList(initialPlacedImages);
-      resizeCanvas();
-    };
-  </script>
-  <!-- Unified Application Script Loader (Supports HMR for local dev and robust global UMD bundle for production/offline) -->
-  <script>
-    (function() {
-      const isLocalDev = window.location.protocol !== 'file:' && 
-                         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      
-      if (isLocalDev) {
-        document.getElementById("info-mode-text").innerText = "Live Server (ESM)";
-        document.getElementById("info-mode-text").className = "text-brand-400 font-mono";
-        document.getElementById("load-status-text").innerText = "Dev Server Online";
-        document.getElementById("load-status-text").className = "text-emerald-400";
-        console.log("Detecting local dev environment. Loading TypeScript module...");
-
-        // Inject module script to support HMR in Vite dev server
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.innerHTML = `
-          import { AspectGridCollageify } from './src/index.ts';
-          window.initCollageApp(AspectGridCollageify);
-        `;
-        document.head.appendChild(script);
-      } else {
-        const isOffline = window.location.protocol === 'file:';
-        document.getElementById("info-mode-text").innerText = isOffline ? "Static Offline" : "Production (Global)";
-        document.getElementById("info-mode-text").className = isOffline ? "text-slate-400 font-mono" : "text-emerald-400 font-mono";
-        document.getElementById("load-status-text").innerText = isOffline ? "Offline Mode" : "Online";
-        document.getElementById("load-status-text").className = isOffline ? "text-slate-400" : "text-emerald-400";
-        console.log(isOffline ? "Detecting file:// protocol. Loading pre-compiled global bundle..." : "Loading compiled UMD bundle...");
-
-        const script = document.createElement('script');
-        script.src = './dist/index.global.js';
-        script.onload = () => {
-          if (window.AspectGridCollageify) {
-            const targetClass = window.AspectGridCollageify.AspectGridCollageify || window.AspectGridCollageify;
-            window.initCollageApp(targetClass);
-          } else {
-            console.error("AspectGridCollageify not found on window object.");
-            alert("Could not find pre-compiled global bundle. Please run 'pnpm build' first!");
-          }
-        };
-        script.onerror = () => {
-          console.error("Failed to load ./dist/index.global.js");
-          alert("Failed to load pre-compiled global bundle. Please run 'pnpm build' to generate dist/ index files.");
-        };
-        document.head.appendChild(script);
-      }
-    })();
+    function escapeHtml(value) {
+      return value.replace(/[&<>'"]/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      }[char]));
+    }
   </script>
 </body>
 </html>

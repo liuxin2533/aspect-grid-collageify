@@ -1,259 +1,375 @@
 # aspect-grid-collageify
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/npm/v/aspect-grid-collageify.svg?style=flat-square&color=6366f1" alt="npm version">
-  </a>
-  <a href="https://bundlephobia.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/bundlephobia/min/aspect-grid-collageify?style=flat-square&color=indigo" alt="bundle size">
-  </a>
-  <a href="https://www.npmjs.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/npm/dm/aspect-grid-collageify.svg?style=flat-square&color=pink" alt="downloads">
-  </a>
-  <a href="https://github.com/liuxin2533/aspect-grid-collageify/blob/main/LICENSE">
-    <img src="https://img.shields.io/npm/l/aspect-grid-collageify.svg?style=flat-square&color=emerald" alt="license">
-  </a>
+  <a href="https://www.npmjs.com/package/aspect-grid-collageify"><img src="https://img.shields.io/npm/v/aspect-grid-collageify?style=flat-square&color=6366f1" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/aspect-grid-collageify"><img src="https://img.shields.io/npm/dm/aspect-grid-collageify?style=flat-square&color=0ea5e9" alt="npm downloads"></a>
+  <a href="https://bundlephobia.com/package/aspect-grid-collageify"><img src="https://img.shields.io/bundlephobia/minzip/aspect-grid-collageify?style=flat-square&color=22c55e" alt="minzip size"></a>
+  <img src="https://img.shields.io/badge/TypeScript-ready-3178c6?style=flat-square" alt="TypeScript ready">
+  <img src="https://img.shields.io/badge/Canvas-powered-f97316?style=flat-square" alt="Canvas powered">
+  <img src="https://img.shields.io/badge/sideEffects-false-8b5cf6?style=flat-square" alt="sideEffects false">
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/aspect-grid-collageify?style=flat-square&color=10b981" alt="license"></a>
 </p>
-
-一款轻量级、高性能的纯前端 HTML5 Canvas 等比智能网格拼图引擎。支持可视化交互编辑与后台离屏无损渲染，所有图片在排版中均严格保持比例锁定。
 
 [English](./README_EN.md) | 简体中文
 
----
+`aspect-grid-collageify` 是一个轻量级、纯前端、基于 Canvas 的图片拼图工具库。它提供两层能力：
+
+- `CollageCore`：无 UI 的拼图核心，负责状态、网格布局、碰撞检测、图片变更、最终渲染和导出。
+- `CanvasCollageEditor`：基于 `CollageCore` 的可视化编辑器，负责 canvas 交互、选区、拖拽移动、拖拽插入、快捷键和编辑覆盖层。
+
+Core 输出永远是干净的最终拼图；网格线、占位符、选中框、拖拽预览等编辑 UI 只属于 Editor，不会进入导出结果。
 
 ## ✨ 特性
 
-- 📐 **比例锁定**: 严格维持容器宽高比与单个图片格子比例，拉伸和缩放时绝不产生变形。
-- 🎮 **可视化编辑器**: 支持拖拽自动吸附排版、选中高亮、悬停占位提示与实时画布重绘。
-- 🎨 **单图美化调节**: 支持对**每一张图片单独调节**圆角半径、阴影模糊、阴影偏移及透明度，并拥有优雅的全局配置回退机制。
-- ⚙️ **离屏渲染器**: 在后台静默渲染导出无辅助线和编辑高亮的超高分辨率 PNG 图像，完全脱离 DOM。
-- 🛡️ **防碰撞与越界保护**: 内置几何数学网格算法，确保图片在缩放、移动时互不重叠且不越界。
-- ↕️ **智能推拉排版**: 一键对目标图片下方的所有行进行整体下推或上拉，自动重整空白间隙。
-- 📦 **零外部依赖**: 极小体积包（约 32KB IIFE），无任何第三方依赖，加载迅速。
-
----
+- 🎨 纯前端 Canvas 渲染，无服务端依赖。
+- 🖼️ 支持离屏导出 PNG / Blob。
+- 📐 支持自定义容器比例、图片比例、网格列数、间距和内边距。
+- ✨ 支持透明背景、图片圆角、阴影样式。
+- 🧩 支持按网格插入、移动、缩放、交换、删除和替换图片。
+- 🕹️ 支持可视化编辑：点击插槽上传、拖拽文件插入、拖拽移动、拖拽换位、多选、键盘操作。
+- 🧠 TypeScript 类型完整导出。
+- 📦 多入口导出，便于只使用 Core 或只引入 Editor。
 
 ## 📦 安装
 
 ```bash
 npm install aspect-grid-collageify
-# 或
+```
+
+```bash
 pnpm add aspect-grid-collageify
-# 或
+```
+
+```bash
 yarn add aspect-grid-collageify
 ```
 
----
+## 🚀 导入方式
 
-## ⚡ 快速上手
-
-### 1. 离屏无痕渲染（Headless 模式）
-
-在后台静默生成拼图的 PNG 图像：
+推荐按能力入口导入：
 
 ```typescript
-import { AspectGridCollageify } from "aspect-grid-collageify";
-
-async function makeCollage() {
-  const engine = new AspectGridCollageify({
-    containerRatio: "3:4",
-    imageRatio: "16:9",
-    gridColumns: 8,
-    padding2K: 60,
-    gap2K: 24,
-    containerBgColor: "#ffffff",
-    images: [
-      { id: "img-1", src: "https://example.com/beach.jpg", name: "Beach", gridX: 0, gridY: 0, span: 4 },
-      { 
-        id: "img-2", 
-        src: "https://example.com/mountain.jpg", 
-        name: "Mountain", 
-        gridX: 4, 
-        gridY: 0, 
-        span: 4,
-        borderRadius2K: 48, // 仅单独覆盖此图片的圆角半径
-        shadowBlur2K: 30,   // 仅单独为此图片定制阴影模糊值
-      },
-      { id: "img-3", src: "https://example.com/forest.jpg", name: "Forest", gridX: 2, gridY: 4, span: 4 },
-    ],
-  });
-
-  // 导出 2K 高清 PNG Base64 (宽度: 2048px, 高度: 2730px)
-  const base64Png = await engine.exportPNG(2048);
-  console.log("生成的拼图 Base64 编码:", base64Png);
-}
+import { CollageCore } from "aspect-grid-collageify/core";
+import { CanvasCollageEditor } from "aspect-grid-collageify/editor";
 ```
 
-### 2. 可视化编辑器（Visual 交互模式）
-
-在原生 HTML 或前端框架组件中绑定一个 `<canvas>` 进行实时可视化编辑：
-
-```html
-<canvas id="collage-canvas" style="width: 100%; height: 100%;"></canvas>
-
-<script type="module">
-  import { AspectGridCollageify } from 'aspect-grid-collageify';
-
-  const canvas = document.getElementById("collage-canvas");
-  const engine = new AspectGridCollageify({
-    containerRatio: "3:4",
-    imageRatio: "16:9",
-    gridColumns: 8,
-    padding2K: 60,
-    gap2K: 24,
-    imageBorderRadius2K: 24, // 全局默认圆角半径
-    images: []
-  }, canvas);
-
-  // 订阅图片数组变更
-  engine.onImagesChanged((images) => {
-    console.log("图片排版更新:", images);
-  });
-
-  // 订阅选中状态变更
-  engine.onActiveImageChanged((activeId) => {
-    console.log("当前选中图片 ID:", activeId);
-  });
-
-  // 订阅空白网格点击事件
-  engine.onCellClicked((x, y) => {
-    console.log("点击了空白网格的坐标:", x, y);
-  });
-
-  // 初始绘制
-  engine.render();
-</script>
-```
-
----
-
-## 📖 API 接口说明
-
-### 1. 配置项选项 (`CollageConfig`)
-
-在构造函数中传入，用于初始化拼图引擎状态：
-
-| 配置属性 | 类型 | 默认值 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `containerRatio` | `string` | `"3:4"` | 画布的整体宽高比：`"1:1"`, `"3:4"`, `"4:3"`, `"16:9"`, `"9:16"` 或 `"custom"`（自定义）。 |
-| `customContainerW` | `number` | - | 自定义画布宽比例值（在 `containerRatio` 为 `"custom"` 时必填）。 |
-| `customContainerH` | `number` | - | 自定义画布高比例值（在 `containerRatio` 为 `"custom"` 时必填）。 |
-| `imageRatio` | `string` | `"16:9"` | 单张图片格子的默认宽高比：`"1:1"`, `"4:3"`, `"16:9"` 或 `"custom"`。 |
-| `customImageW` | `number` | - | 自定义单图格子宽比例值（在 `imageRatio` 为 `"custom"` 时必填）。 |
-| `customImageH` | `number` | - | 自定义单图格子高比例值（在 `imageRatio` 为 `"custom"` 时必填）。 |
-| `gridColumns` | `number` | `8` | 网格列密度数（可设置范围为 `4` 至 `48` 之间的双数）。 |
-| `padding2K` | `number` | `60` | 拼图外边缘内边距（以 2K 物理宽度为基准按比例缩放，单位像素）。 |
-| `gap2K` | `number` | `24` | 拼图格子之间的间距（以 2K 物理宽度为基准按比例缩放，单位像素）。 |
-| `containerBgColor` | `string` | `"#ffffff"` | 画布背景颜色。 |
-| `useTransparentBg` | `boolean` | `false` | 是否启用透明通道。为 `true` 时，导出 PNG 会保留透明背景。 |
-| `images` | `PlacedImage[]` | `[]` | 初始载入排版的图片块数组。 |
-| `showGridlines` | `boolean` | `true` | 是否在可视化编辑模式下显示虚线辅助网格线。 |
-| `placementSize` | `string` | `"medium"` | 默认的空白格大小：`"small"`, `"medium"`, `"large"`。 |
-| `imageBorderRadius2K`| `number` | `24` | 全局的图片卡片圆角半径（以 2K 为基准缩放）。 |
-| `imageShadowBlur2K`  | `number` | `0` | 全局的图片卡片阴影模糊半径（以 2K 为基准缩放）。 |
-| `imageShadowOffset2K`| `number` | `0` | 全局的图片卡片阴影位移大小（以 2K 为基准缩放）。 |
-| `imageShadowOpacity` | `number` | `0.2` | 全局的图片卡片阴影不透明度（0 到 1）。 |
-
----
-
-### 2. 已放置图片结构 (`PlacedImage`)
-
-代表每一个已放置到网格中的图片卡片节点对象：
+也可以从主入口导入：
 
 ```typescript
-export interface PlacedImage {
-  id: string;              // 节点的唯一 ID
-  src: string;             // 图片的访问链接/Base64/ObjectURL
-  name: string;            // 文件名/描述标签
-  gridX: number;           // 网格列起始索引（从 0 开始）
-  gridY: number;           // 网格行起始索引（从 0 开始）
-  span: number;            // 图片块在网格中所占用的横跨大小（正方形 span * span）
-  
-  // 可选：单张图片个体的外观配置覆写（覆盖全局 defaults）
-  borderRadius2K?: number; // 覆写全局的 imageBorderRadius2K 圆角设置
-  shadowBlur2K?: number;   // 覆写全局的 imageShadowBlur2K 阴影模糊设置
-  shadowOffset2K?: number; // 覆写全局的 imageShadowOffset2K 阴影偏移设置
-  shadowOpacity?: number;  // 覆写全局的 imageShadowOpacity 阴影透明度设置
-}
+import { CollageCore, CanvasCollageEditor } from "aspect-grid-collageify";
 ```
 
----
+| 入口 | 导出 | 说明 |
+| --- | --- | --- |
+| `aspect-grid-collageify` | `CollageCore`, `CanvasCollageEditor`, 全部公共类型 | 主入口。 |
+| `aspect-grid-collageify/core` | `CollageCore` | 只使用离屏渲染和拼图核心能力时使用。 |
+| `aspect-grid-collageify/editor` | `CanvasCollageEditor` | 需要 canvas 可视化编辑能力时使用。 |
 
-### 3. 类方法 (`AspectGridCollageify`)
+## 🖼️ 快速开始：离屏生成拼图
 
-#### 🎨 视觉渲染与配置更新
+```typescript
+import { CollageCore } from "aspect-grid-collageify/core";
 
-- **`render(drawUI: boolean = true)`**: 触发 Canvas 画布渲染绘制。传入 `false` 时将渲染不带任何辅助虚线、选中边框的干净视图。
+const core = new CollageCore({
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 8,
+  padding2K: 60,
+  gap2K: 24,
+  background: {
+    color: "#ffffff",
+    transparent: false,
+  },
+  imageStyle: {
+    borderRadius2K: 24,
+    shadowBlur2K: 12,
+    shadowOffset2K: 8,
+    shadowOpacity: 0.2,
+  },
+  images: [
+    {
+      id: "image-1",
+      src: "/images/a.jpg",
+      name: "A",
+      gridX: 0,
+      gridY: 0,
+      span: 4,
+    },
+    {
+      id: "image-2",
+      src: "/images/b.jpg",
+      name: "B",
+      gridX: 4,
+      gridY: 0,
+      span: 4,
+    },
+  ],
+});
 
-- **`updateConfig(config: Partial<CollageConfig>)`**: 动态更新配置参数，并自动重绘画布。
-- **`getConfig(): CollageConfig`**: 获取当前生效的全部配置参数。
+const dataUrl = await core.exportPNG(2048);
+```
 
-#### 📂 图片管理 API
+## 🎛️ 快速开始：可视化编辑器
 
-- **`getImages(): PlacedImage[]`**: 获取当前画布中放置的所有图片节点数组。
+```typescript
+import { CollageCore } from "aspect-grid-collageify/core";
+import { CanvasCollageEditor } from "aspect-grid-collageify/editor";
 
-- **`setImages(images: PlacedImage[])`**: 替换画布中的所有图片，并自动触发计算排版。
-- **`addImage(img: PlacedImage)`**: 添加一张图片至拼图网格并默认激活选中它。
-- **`removeImage(imgId: string)`**: 通过 ID 移出某张已放置的图片。
-- **`updateImage(imgId: string, updates: Partial<PlacedImage>)`**: 动态更新目标图片的专属属性（如位置坐标、格跨大小，或单独覆写其圆角/阴影等样式），并立即调度 Canvas 画布重绘。
+const canvas = document.querySelector("canvas")!;
 
-#### 🕹️ 坐标微调与排列对齐
+const core = new CollageCore({
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 8,
+  padding2K: 60,
+  gap2K: 24,
+  images: [],
+});
 
-- **`modifyImageSpan(imgId: string, delta: number, gridRows: number): boolean`**: 缩放目标图片的网格占比大小 (+1/-1)。如果计算防撞和出界检测成功则返回 `true`。
+const editor = new CanvasCollageEditor(canvas, core, {
+  multiSelect: true,
+  keyboard: true,
+  dragMove: true,
+  dragSwap: true,
+  dragInsert: true,
+  quickReplace: true,
+});
 
-- **`stepImagePosition(imgId: string, dir: "up" | "down" | "left" | "right", gridRows: number): boolean`**: 使目标图片在网格坐标系中向指定方向平移 1 个单位。
-- **`pushDownBelow(imgId: string, gridRows: number): boolean`**: 将当前选定图片底边以下的所有其他图片卡片，整体下推 1 个网格单位。
-- **`pullUpBelow(imgId: string): boolean`**: 如果空间允许，将当前选定图片底边以下的所有图片卡片，整体上拉 1 个网格单位以消除空白行隙。
+editor.on("change", (images) => {
+  console.log("images changed", images);
+});
 
-#### ⚡ 交互事件订阅
+editor.on("cellclick", (placement) => {
+  // 调用方可以打开文件选择器，然后调用 editor.insertFiles(files)。
+  editor.setPendingInsertPlacement(placement);
+});
+```
 
-- **`onImagesChanged(callback: (images: PlacedImage[]) => void)`**: 当画布内图片发生增加、删除、位移、缩放或美化属性调整时触发。
+也可以使用便捷构造：
 
-- **`onActiveImageChanged(callback: (id: string | null) => void)`**: 当选中的图片节点发生改变时触发（传入 null 代表取消选中）。
-- **`onCellClicked(callback: (x: number, y: number) => void)`**: 当点击空白辅助格子时触发，返回点击的网格坐标 $(X, Y)$。
+```typescript
+const editor = CanvasCollageEditor.create(canvas, options, editorOptions);
+const core = editor.core;
+```
 
-#### 💾 离屏无损导出
+## ⚙️ 配置示例
 
-- **`exportPNG(targetWidth: number = 2048): Promise<string>`**: 异步预加载所有拼图图片，自动创建一个独立的超高分辨率后台离屏 Canvas，绘制无辅助线的洁净画面，并 resolve 返回 PNG DataURL (Base64) 字符串。
+```typescript
+const options = {
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 12,
+  padding2K: 60,
+  gap2K: 24,
+  background: {
+    color: "#ffffff",
+    transparent: false,
+  },
+  imageStyle: {
+    borderRadius2K: 24,
+    shadowBlur2K: 12,
+    shadowOffset2K: 8,
+    shadowOpacity: 0.2,
+  },
+  placementPreset: "medium",
+  images: [],
+};
+```
 
----
+## 📚 API
 
-## 📐 几何网格对齐与缩放数学
+### `CollageCore`
 
-拼图的位置与尺寸转换由网格几何数学公式严格驱动，将离散的网格坐标转换为实际物理像素点：
+`CollageCore` 是拼图状态和最终渲染的核心。它不绑定 DOM 事件，不维护选区，不绘制编辑覆盖层。
 
-1. **基准缩放比计算**：
-   $$\text{scale} = \frac{\text{width}}{2048}$$
-   该公式保证了在 2K 物理宽度基准下定义的 `padding`, `gap`, `radius`, `shadow` 等参数，在导出 4K 高清大图时能够得到同比的高清拉伸。
-2. **格子物理像素尺寸换算**：
-   $$\text{cellW} = \frac{\text{width} - 2 \cdot \text{padding} - (\text{gridColumns} - 1) \cdot \text{gap}}{\text{gridColumns}}$$
-   $$\text{cellH} = \frac{\text{cellW} + \text{gap}}{\text{imageRatioVal}} - \text{gap}$$
-3. **碰撞相交判断方程**：
-   $$\text{Collision} = \neg (X_{1} + S_{1} \le X_{2} \lor X_{2} + S_{2} \le X_{1} \lor Y_{1} + S_{1} \le Y_{2} \lor Y_{2} + S_{2} \le Y_{1})$$
+#### 构造函数
 
----
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `new CollageCore(options)` | `aspect-grid-collageify/core` | `options: CollageOptions` | `CollageCore` | 创建一个拼图核心实例，并初始化配置和图片列表。 |
 
-## 🛠️ 本地运行与开发调试
+#### 状态 API
 
-1. **编译打包构建库文件**：
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `getOptions()` | `CollageCore` | 无 | `CollageOptions` | 获取当前拼图配置。 |
+| `setOptions(options)` | `CollageCore` | `options: CollageOptions` | `void` | 替换完整配置，并触发变更事件。 |
+| `updateOptions(options)` | `CollageCore` | `options: Partial<CollageOptions>` | `void` | 合并更新部分配置，并触发变更事件。 |
+| `getImages()` | `CollageCore` | 无 | `CollageImage[]` | 获取当前图片列表。 |
+| `setImages(images)` | `CollageCore` | `images: CollageImage[]` | `void` | 替换图片列表；会根据当前网格列数约束图片位置。 |
+| `onChange(callback)` | `CollageCore` | `callback: (images: CollageImage[], options: CollageOptions) => void` | `Unsubscribe` | 监听配置或图片变化。返回取消监听函数。 |
+| `destroy()` | `CollageCore` | 无 | `void` | 清理监听器和图片缓存。 |
 
-   ```bash
-   pnpm install
-   pnpm build
-   ```
+#### 几何 API
 
-2. **启动本地开发调试服务器 (Vite Dev Server)**：
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `getLayout(width, height)` | `CollageCore` | `width: number`, `height: number` | `CollageLayout` | 根据视口尺寸和当前配置计算布局。 |
+| `toGridPoint(point, viewport)` | `CollageCore` | `point: GridPoint`, `viewport: DrawViewport` | `GridPoint` | 将 canvas 坐标转换为网格坐标。 |
+| `getImageRect(imageOrId, layout)` | `CollageCore` | `imageOrId: CollageImage \| string`, `layout: CollageLayout` | `ImageRect \| null` | 获取指定图片在 canvas 中的矩形区域。 |
+| `hitTest(point, viewport)` | `CollageCore` | `point: GridPoint`, `viewport: DrawViewport` | `CollageImage \| null` | 根据 canvas 坐标命中图片。 |
+| `getPlacementSpan(preset?)` | `CollageCore` | `preset?: PlacementPreset` | `number` | 根据当前网格列数和预设计算插入图片的 span。 |
+| `findSlots(options)` | `CollageCore` | `options: FindSlotsOptions` | `GridPlacement[]` | 查找当前布局中可放置图片的空插槽。 |
+| `findFirstSlot(options)` | `CollageCore` | `options: FindSlotsOptions` | `GridPlacement \| null` | 查找第一个可用空插槽。 |
+| `canPlace(placement, gridRows, ignoreIds?)` | `CollageCore` | `placement: GridPlacement`, `gridRows: number`, `ignoreIds?: string[]` | `boolean` | 判断指定位置是否可放置图片，可忽略指定图片 id。 |
 
-   ```bash
-   pnpm dev
-   ```
+#### 图片与布局 API
 
-   在浏览器中打开 `http://localhost:5173/`。修改 `./src/index.ts` 将会立即热重载刷新浏览器内的画布效果。
-3. **静态文件本地预览 (免跨域 Offline 模式)**：
-   你也可以直接双击 `index.html` 离线运行。双协议加载器会自动判定 `file://` 协议并动态注入打包好的 `./dist/index.global.js` UMD 库文件，无需本地 HTTP 代理即可预览调试全部功能，防止浏览器产生文件跨域拦截报错。
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `insertImage(image)` | `CollageCore` | `image: CollageImage` | `CollageImage` | 插入完整图片对象。调用方负责提供 id、src、gridX、gridY 和 span。 |
+| `insertImageAt(input, placement)` | `CollageCore` | `input: ImageInput`, `placement: GridPlacement` | `CollageImage` | 根据图片输入和明确位置创建并插入图片。 |
+| `insertImages(inputs, options)` | `CollageCore` | `inputs: ImageInput[]`, `options: InsertImagesOptions` | `CollageImage[]` | 批量插入图片，按空插槽自动排布。 |
+| `updateImage(id, patch)` | `CollageCore` | `id: string`, `patch: Partial<CollageImage>` | `boolean` | 更新指定图片。成功返回 `true`。 |
+| `removeImage(id)` | `CollageCore` | `id: string` | `boolean` | 删除单张图片。成功返回 `true`。 |
+| `removeImages(ids)` | `CollageCore` | `ids: string[]` | `boolean` | 批量删除图片。成功返回 `true`。 |
+| `replaceImage(id, input)` | `CollageCore` | `id: string`, `input: ImageInput` | `boolean` | 替换指定图片的 src、name 和样式。 |
+| `moveImage(id, target, gridRows)` | `CollageCore` | `id: string`, `target: GridPoint`, `gridRows: number` | `boolean` | 将单张图片移动到指定网格坐标。 |
+| `moveImages(ids, delta, gridRows)` | `CollageCore` | `ids: string[]`, `delta: GridPoint`, `gridRows: number` | `boolean` | 按网格偏移量批量移动图片。 |
+| `moveImagesByDirection(ids, direction, gridRows)` | `CollageCore` | `ids: string[]`, `direction: MoveDirection`, `gridRows: number` | `boolean` | 按方向批量移动图片。 |
+| `resizeImage(id, delta, gridRows)` | `CollageCore` | `id: string`, `delta: number`, `gridRows: number` | `boolean` | 调整单张图片 span。 |
+| `resizeImages(ids, delta, gridRows)` | `CollageCore` | `ids: string[]`, `delta: number`, `gridRows: number` | `boolean` | 批量调整图片 span。 |
+| `swapImages(sourceId, targetId)` | `CollageCore` | `sourceId: string`, `targetId: string` | `boolean` | 交换两张图片的位置和 span。 |
+| `pushBelow(id, rows, gridRows)` | `CollageCore` | `id: string`, `rows: number`, `gridRows: number` | `boolean` | 将指定图片下方的图片整体向下推。 |
+| `pullBelow(id, rows?)` | `CollageCore` | `id: string`, `rows?: number` | `boolean` | 将指定图片下方的图片整体向上拉。 |
 
----
+#### 渲染与导出 API
 
-## 📄 开源许可证
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `draw(ctx, viewport)` | `CollageCore` | `ctx: CanvasRenderingContext2D`, `viewport: DrawViewport` | `void` | 在指定 canvas 上绘制最终拼图。 |
+| `renderToCanvas(width?)` | `CollageCore` | `width?: number` | `Promise<HTMLCanvasElement>` | 离屏渲染并返回 canvas。高度由容器比例自动计算。 |
+| `exportPNG(width?)` | `CollageCore` | `width?: number` | `Promise<string>` | 导出 PNG Data URL。 |
+| `exportBlob(width?, type?, quality?)` | `CollageCore` | `width?: number`, `type?: string`, `quality?: number` | `Promise<Blob>` | 导出 Blob。支持 PNG、JPEG、WebP 等 canvas 支持的类型。 |
+| `getImageLoader()` | `CollageCore` | 无 | `ImageLoader` | 获取内部图片加载器。通常仅高级场景使用。 |
 
-MIT
+### `CanvasCollageEditor`
+
+`CanvasCollageEditor` 是 canvas 可视化编辑引擎。它通过 `core` 读写拼图状态，并额外维护选区、活动图片、拖拽状态和编辑覆盖层。
+
+#### 构造函数
+
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `new CanvasCollageEditor(canvas, core, options?)` | `aspect-grid-collageify/editor` | `canvas: HTMLCanvasElement`, `core: CollageCore`, `options?: CanvasCollageEditorOptions` | `CanvasCollageEditor` | 基于已有 Core 创建可视化编辑器。 |
+| `CanvasCollageEditor.create(canvas, options, editorOptions?)` | `CanvasCollageEditor` | `canvas: HTMLCanvasElement`, `options: CollageOptions`, `editorOptions?: CanvasCollageEditorOptions` | `CanvasCollageEditor` | 便捷构造：内部创建 `CollageCore` 并返回 editor。 |
+
+#### 基础 API
+
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `core` | `CanvasCollageEditor` | 无 | `CollageCore` | 底层 Core 实例。 |
+| `getCore()` | `CanvasCollageEditor` | 无 | `CollageCore` | 获取底层 Core 实例。 |
+| `render()` | `CanvasCollageEditor` | 无 | `void` | 重绘最终拼图和编辑覆盖层。 |
+| `resize()` | `CanvasCollageEditor` | 无 | `void` | 根据 canvas 当前尺寸重新渲染。 |
+| `destroy()` | `CanvasCollageEditor` | 无 | `void` | 移除事件监听并释放由 editor 创建的 Object URL。 |
+
+#### 选区 API
+
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `getSelection()` | `CanvasCollageEditor` | 无 | `string[]` | 获取当前选中的图片 id 列表。 |
+| `setSelection(ids)` | `CanvasCollageEditor` | `ids: string[]` | `void` | 设置选区。无效 id 会被忽略。 |
+| `getActiveId()` | `CanvasCollageEditor` | 无 | `string \| null` | 获取当前活动图片 id。 |
+| `setActiveId(id)` | `CanvasCollageEditor` | `id: string \| null` | `void` | 设置当前活动图片，并同步选区。 |
+| `clearSelection()` | `CanvasCollageEditor` | 无 | `void` | 清空选区和活动图片。 |
+
+#### 输入与文件 API
+
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `handleKeyDown(event)` | `CanvasCollageEditor` | `event: KeyboardEvent` | `boolean` | 处理删除、方向移动、快捷缩放等键盘操作。 |
+| `insertFiles(files, options?)` | `CanvasCollageEditor` | `files: FileList \| File[]`, `options?: Partial<InsertImagesOptions>` | `Promise<CollageImage[]>` | 解析并插入文件。若存在 pending placement，则优先插入该位置。 |
+| `insertFilesAt(files, point)` | `CanvasCollageEditor` | `files: FileList \| File[]`, `point: GridPoint` | `Promise<CollageImage[]>` | 按 canvas 坐标插入文件；优先命中空插槽，否则回退到网格落点。 |
+| `replaceActiveFile(file)` | `CanvasCollageEditor` | `file: File` | `Promise<boolean>` | 用文件替换当前活动图片。 |
+| `replaceFile(id, file)` | `CanvasCollageEditor` | `id: string`, `file: File` | `Promise<boolean>` | 用文件替换指定图片。 |
+| `setPendingInsertPlacement(placement)` | `CanvasCollageEditor` | `placement: GridPlacement \| null` | `void` | 设置下一次 `insertFiles()` 优先使用的插入位置。 |
+
+#### 事件 API
+
+| API | 位置 | 参数 | 返回值 | 描述 |
+| --- | --- | --- | --- | --- |
+| `on("change", callback)` | `CanvasCollageEditor` | `callback: (images: CollageImage[]) => void` | `Unsubscribe` | Core 变化并完成 editor 重绘后触发。 |
+| `on("selectionchange", callback)` | `CanvasCollageEditor` | `callback: (ids: string[]) => void` | `Unsubscribe` | 选区变化时触发。 |
+| `on("activechange", callback)` | `CanvasCollageEditor` | `callback: (id: string \| null) => void` | `Unsubscribe` | 活动图片变化时触发。 |
+| `on("cellclick", callback)` | `CanvasCollageEditor` | `callback: (placement: GridPlacement) => void` | `Unsubscribe` | 点击空插槽时触发。 |
+| `on("replacerequest", callback)` | `CanvasCollageEditor` | `callback: (id: string) => void` | `Unsubscribe` | 双击图片请求替换时触发。 |
+| `on("error", callback)` | `CanvasCollageEditor` | `callback: (error: unknown) => void` | `Unsubscribe` | 文件解析、拖拽插入等异步错误发生时触发。 |
+
+### 类型 API
+
+#### 基础类型
+
+| 类型 | 位置 | 字段 / 参数 | 描述 |
+| --- | --- | --- | --- |
+| `RatioOption` | `aspect-grid-collageify` | `"1:1" \| "3:4" \| "4:3" \| "16:9" \| "9:16" \| "custom" \| string` | 比例配置。普通字符串应为 `w:h` 格式。 |
+| `PlacementPreset` | `aspect-grid-collageify` | `"small" \| "medium" \| "large"` | 自动插入图片时使用的尺寸预设。 |
+| `MoveDirection` | `aspect-grid-collageify` | `"up" \| "down" \| "left" \| "right"` | 方向移动枚举。 |
+| `GridPoint` | `aspect-grid-collageify` | `{ x: number; y: number }` | 网格点或 canvas 点。语义由 API 参数决定。 |
+| `GridPlacement` | `aspect-grid-collageify` | `{ gridX: number; gridY: number; span: number }` | 图片在网格中的位置和尺寸。 |
+| `ViewportSize` | `aspect-grid-collageify` | `{ width: number; height: number }` | 视口尺寸。 |
+| `DrawViewport` | `aspect-grid-collageify` | `{ width: number; height: number }` | 绘制视口尺寸。 |
+| `Unsubscribe` | `aspect-grid-collageify` | `() => void` | 取消监听函数。 |
+
+#### 配置与图片类型
+
+| 类型 | 位置 | 字段 / 参数 | 描述 |
+| --- | --- | --- | --- |
+| `ImageStyleOptions` | `aspect-grid-collageify` | `borderRadius2K?: number`, `shadowBlur2K?: number`, `shadowOffset2K?: number`, `shadowOpacity?: number` | 图片样式配置。数值以 2K 画布为基准缩放。 |
+| `CollageImage` | `aspect-grid-collageify` | `id: string`, `src: string`, `name: string`, `gridX: number`, `gridY: number`, `span: number`, `ImageStyleOptions` | 拼图中的图片模型。 |
+| `ImageInput` | `aspect-grid-collageify` | `id?: string`, `src: string`, `name?: string`, `style?: ImageStyleOptions` | 插入或替换图片时的输入模型。 |
+| `CollageOptions` | `aspect-grid-collageify` | `containerRatio`, `imageRatio`, `gridColumns`, `padding2K`, `gap2K`, `background?`, `imageStyle?`, `images?`, `placementPreset?` | 拼图核心配置。 |
+
+#### 布局与操作类型
+
+| 类型 | 位置 | 字段 / 参数 | 描述 |
+| --- | --- | --- | --- |
+| `CollageLayout` | `aspect-grid-collageify` | `scale`, `padding`, `gap`, `cellW`, `cellH`, `gridRows`, `offsetX`, `offsetY`, `gridW`, `gridH`, `containerRatioVal`, `imageRatioVal` | 根据配置和视口计算出的布局数据。 |
+| `ImageRect` | `aspect-grid-collageify` | `{ x: number; y: number; w: number; h: number }` | 图片在 canvas 中的矩形区域。 |
+| `FindSlotsOptions` | `aspect-grid-collageify` | `{ span: number; gridRows: number }` | 查找空插槽的参数。 |
+| `InsertImagesOptions` | `aspect-grid-collageify` | `{ span?: number; placementPreset?: PlacementPreset; gridRows: number }` | 批量插入图片的参数。 |
+| `CanvasCollageEditorOptions` | `aspect-grid-collageify/editor` | `multiSelect?`, `keyboard?`, `dragMove?`, `dragSwap?`, `dragInsert?`, `quickReplace?`, `preventDefaultFileDrop?`, `fileResolver?`, `overlay?` | Editor 交互配置。 |
+| `EditorOverlayOptions` | `aspect-grid-collageify` | `showBoundary?`, `showGridlines?`, `showSlots?`, `slotText?` | Editor 覆盖层显示配置。 |
+
+## 🛠️ 本地开发
+
+```bash
+pnpm install
+pnpm dev
+```
+
+打开 demo 页面后可以测试 canvas 可视化编辑能力。
+
+构建发布产物：
+
+```bash
+pnpm build
+```
+
+当前构建会输出 ESM、CommonJS 和类型声明，并支持以下包入口：
+
+```text
+aspect-grid-collageify
+aspect-grid-collageify/core
+aspect-grid-collageify/editor
+```
+
+## 🗂️ 目录结构
+
+```text
+src/
+  core.ts           # CollageCore：状态、几何、布局变更、最终渲染和导出
+  editor.ts         # CanvasCollageEditor：canvas 可视化编辑能力
+  editor-render.ts  # 编辑覆盖层渲染
+  image-loader.ts   # 图片加载和缓存
+  layout.ts         # 纯几何、网格、碰撞、空位查找
+  render.ts         # 最终拼图渲染
+  types.ts          # 公共类型
+  index.ts          # 主导出入口
+```
+
+## 📄 协议
+
+本项目使用 [MIT License](./LICENSE)。
+
+Copyright (c) 2026 liuxin2533

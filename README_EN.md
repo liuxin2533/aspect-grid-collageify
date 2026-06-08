@@ -1,246 +1,375 @@
 # aspect-grid-collageify
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/npm/v/aspect-grid-collageify.svg?style=flat-square&color=6366f1" alt="npm version">
-  </a>
-  <a href="https://bundlephobia.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/bundlephobia/min/aspect-grid-collageify?style=flat-square&color=indigo" alt="bundle size">
-  </a>
-  <a href="https://www.npmjs.com/package/aspect-grid-collageify">
-    <img src="https://img.shields.io/npm/dm/aspect-grid-collageify.svg?style=flat-square&color=pink" alt="downloads">
-  </a>
-  <a href="https://github.com/liuxin2533/aspect-grid-collageify/blob/main/LICENSE">
-    <img src="https://img.shields.io/npm/l/aspect-grid-collageify.svg?style=flat-square&color=emerald" alt="license">
-  </a>
+  <a href="https://www.npmjs.com/package/aspect-grid-collageify"><img src="https://img.shields.io/npm/v/aspect-grid-collageify?style=flat-square&color=6366f1" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/aspect-grid-collageify"><img src="https://img.shields.io/npm/dm/aspect-grid-collageify?style=flat-square&color=0ea5e9" alt="npm downloads"></a>
+  <a href="https://bundlephobia.com/package/aspect-grid-collageify"><img src="https://img.shields.io/bundlephobia/minzip/aspect-grid-collageify?style=flat-square&color=22c55e" alt="minzip size"></a>
+  <img src="https://img.shields.io/badge/TypeScript-ready-3178c6?style=flat-square" alt="TypeScript ready">
+  <img src="https://img.shields.io/badge/Canvas-powered-f97316?style=flat-square" alt="Canvas powered">
+  <img src="https://img.shields.io/badge/sideEffects-false-8b5cf6?style=flat-square" alt="sideEffects false">
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/aspect-grid-collageify?style=flat-square&color=10b981" alt="license"></a>
 </p>
-
-A lightweight, high-performance, pure-frontend HTML5 Canvas-based smart photo collage engine supporting visual interactive editing and headless offscreen rendering. All images maintain their locked aspect ratios dynamically.
 
 English | [简体中文](./README.md)
 
----
+`aspect-grid-collageify` is a lightweight, pure frontend Canvas collage library. It provides two layers of functionality:
+
+- `CollageCore`: a headless collage core for state, grid layout, collision checks, image mutations, final rendering, and export.
+- `CanvasCollageEditor`: a visual editor built on `CollageCore`, responsible for canvas interactions, selection, drag move, drag insert, keyboard shortcuts, and editor overlays.
+
+Core output is always the clean final collage. Editor UI such as gridlines, placeholders, selection outlines, and drag previews only belongs to Editor and is never included in exported images.
 
 ## ✨ Features
 
-- 📐 **Proportional Locking**: Rigid adherence to container aspect ratios and individual image aspect ratios during placement.
-- 🎮 **Interactive Visual Editor**: Drag-and-drop snapping layout, selection highlighting, hover slot indicators, and live redrawing.
-- 🎨 **Per-Image Visual Aesthetics**: Customize border radius, drop shadow blur, offsets, and opacity **individually per image**, with a clean rollback structure to global configurations.
-- ⚙️ **Offscreen Headless Renderer**: Generate clean, high-resolution PNGs (Base64) silently in the background using identical layout algorithms, completely independent of the DOM.
-- 🛡️ **Anti-Overlap Safeguards**: Built-in geometric grid math guarantees that images cannot overlap or exceed boundaries during movement or resizing.
-- ↕️ **Smart Row Shifting**: Shift all rows below a specific image node downward or pull them up to reclaim empty vertical gaps in a single operation.
-- 📦 **Zero Dependencies**: Ultra-compact bundled footprint (~32KB IIFE), extremely fast loading.
-
----
+- 🎨 Pure frontend Canvas rendering with no server dependency.
+- 🖼️ Offscreen PNG / Blob export.
+- 📐 Custom container ratio, image ratio, grid columns, padding, and gap.
+- ✨ Transparent background, image border radius, and image shadows.
+- 🧩 Grid-based insert, move, resize, swap, remove, and replace operations.
+- 🕹️ Visual editing: click slot to upload, drag files to insert, drag move, drag swap, multi-select, and keyboard actions.
+- 🧠 Full TypeScript type exports.
+- 📦 Multiple package entry points, so you can import only Core or use the visual Editor.
 
 ## 📦 Installation
 
 ```bash
 npm install aspect-grid-collageify
-# or
+```
+
+```bash
 pnpm add aspect-grid-collageify
-# or
+```
+
+```bash
 yarn add aspect-grid-collageify
 ```
 
----
+## 🚀 Imports
 
-## ⚡ Quick Start
-
-### 1. Offscreen Rendering (Headless Mode)
-
-Generate a collage PNG silently in the background:
+Recommended capability-based imports:
 
 ```typescript
-import { AspectGridCollageify } from "aspect-grid-collageify";
-
-async function makeCollage() {
-  const engine = new AspectGridCollageify({
-    containerRatio: "3:4",
-    imageRatio: "16:9",
-    gridColumns: 8,
-    padding2K: 60,
-    gap2K: 24,
-    containerBgColor: "#ffffff",
-    images: [
-      { id: "img-1", src: "https://example.com/beach.jpg", name: "Beach", gridX: 0, gridY: 0, span: 4 },
-      { 
-        id: "img-2", 
-        src: "https://example.com/mountain.jpg", 
-        name: "Mountain", 
-        gridX: 4, 
-        gridY: 0, 
-        span: 4,
-        borderRadius2K: 48, // Override global radius for this image
-        shadowBlur2K: 30,   // Customize drop shadow for this image
-      },
-      { id: "img-3", src: "https://example.com/forest.jpg", name: "Forest", gridX: 2, gridY: 4, span: 4 },
-    ],
-  });
-
-  // Export to 2K High-Res PNG Base64 (width: 2048px, height: 2730px)
-  const base64Png = await engine.exportPNG(2048);
-  console.log("Clean output Image Base64:", base64Png);
-}
+import { CollageCore } from "aspect-grid-collageify/core";
+import { CanvasCollageEditor } from "aspect-grid-collageify/editor";
 ```
 
-### 2. Interactive Editor (Visual Mode)
-
-Bind an interactive canvas in vanilla HTML or framework components:
-
-```html
-<canvas id="collage-canvas" style="width: 100%; height: 100%;"></canvas>
-
-<script type="module">
-  import { AspectGridCollageify } from 'aspect-grid-collageify';
-
-  const canvas = document.getElementById("collage-canvas");
-  const engine = new AspectGridCollageify({
-    containerRatio: "3:4",
-    imageRatio: "16:9",
-    gridColumns: 8,
-    padding2K: 60,
-    gap2K: 24,
-    imageBorderRadius2K: 24, // Global default radius
-    images: []
-  }, canvas);
-
-  // Subscribe to updates
-  engine.onImagesChanged((images) => {
-    console.log("Images array updated:", images);
-  });
-
-  engine.onActiveImageChanged((activeId) => {
-    console.log("Selected image changed to:", activeId);
-  });
-
-  engine.onCellClicked((x, y) => {
-    console.log("Clicked empty slot coordinates:", x, y);
-  });
-
-  // Initial draw
-  engine.render();
-</script>
-```
-
----
-
-## 📖 API References
-
-### 1. Configuration Options (`CollageConfig`)
-
-Passed to the constructor to initialize the engine state:
-
-| Attribute | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `containerRatio` | `string` | `"3:4"` | Canvas aspect ratio: `"1:1"`, `"3:4"`, `"4:3"`, `"16:9"`, `"9:16"`, or `"custom"`. |
-| `customContainerW` | `number` | - | Width ratio value (required if `containerRatio` is `"custom"`). |
-| `customContainerH` | `number` | - | Height ratio value (required if `containerRatio` is `"custom"`). |
-| `imageRatio` | `string` | `"16:9"` | Aspect ratio of grid item: `"1:1"`, `"4:3"`, `"16:9"`, or `"custom"`. |
-| `customImageW` | `number` | - | Image width ratio value (required if `imageRatio` is `"custom"`). |
-| `customImageH` | `number` | - | Image height ratio value (required if `imageRatio` is `"custom"`). |
-| `gridColumns` | `number` | `8` | Column partition density (ranges from `4` to `48`). |
-| `padding2K` | `number` | `60` | Edge border padding in pixels (scaled relative to 2K width). |
-| `gap2K` | `number` | `24` | Inner spacing gap between items in pixels (scaled relative to 2K). |
-| `containerBgColor` | `string` | `"#ffffff"` | Solid background color for the canvas layout. |
-| `useTransparentBg` | `boolean` | `false` | If true, clear color channel for transparent alpha exports. |
-| `images` | `PlacedImage[]` | `[]` | Initial photo elements loaded in the layout. |
-| `showGridlines` | `boolean` | `true` | Show helper dashed gridlines in interactive edit mode. |
-| `placementSize` | `string` | `"medium"` | Default span size for empty slots: `"small"`, `"medium"`, `"large"`. |
-| `imageBorderRadius2K`| `number` | `24` | Global fallback image corner radius (scaled to 2K width). |
-| `imageShadowBlur2K`  | `number` | `0` | Global fallback drop shadow blur size (scaled to 2K width). |
-| `imageShadowOffset2K`| `number` | `0` | Global fallback drop shadow directional offset (scaled to 2K). |
-| `imageShadowOpacity` | `number` | `0.2` | Global fallback drop shadow opacity value (0 to 1). |
-
----
-
-### 2. Placed Image Structure (`PlacedImage`)
-
-Represents each image block placed on the canvas:
+You can also import from the root entry:
 
 ```typescript
-export interface PlacedImage {
-  id: string;              // Unique block ID
-  src: string;             // Photo URL / DataURI / ObjectURL
-  name: string;            // Display filename/label
-  gridX: number;           // Column starting index (0-based)
-  gridY: number;           // Row starting index (0-based)
-  span: number;            // Width/height block scale span in grid coordinates
-  
-  // Optional Individual Aesthetics overrides
-  borderRadius2K?: number; // Overrides global imageBorderRadius2K
-  shadowBlur2K?: number;   // Overrides global imageShadowBlur2K
-  shadowOffset2K?: number; // Overrides global imageShadowOffset2K
-  shadowOpacity?: number;  // Overrides global imageShadowOpacity
-}
+import { CollageCore, CanvasCollageEditor } from "aspect-grid-collageify";
 ```
 
----
+| Entry | Exports | Description |
+| --- | --- | --- |
+| `aspect-grid-collageify` | `CollageCore`, `CanvasCollageEditor`, all public types | Root entry. |
+| `aspect-grid-collageify/core` | `CollageCore` | Use this for headless rendering and base collage operations. |
+| `aspect-grid-collageify/editor` | `CanvasCollageEditor` | Use this when you need canvas visual editing. |
 
-### 3. Class Methods (`AspectGridCollageify`)
+## 🖼️ Quick Start: Headless Collage Export
 
-#### 🎨 Visual Render & Config
-*   **`render(drawUI: boolean = true)`**: Trigger a render pass on the interactive canvas. Pass `false` to render clean content without helpers.
-*   **`updateConfig(config: Partial<CollageConfig>)`**: Dynamically modify config options and trigger auto-redraw.
-*   **`getConfig(): CollageConfig`**: Get the current active configuration.
+```typescript
+import { CollageCore } from "aspect-grid-collageify/core";
 
-#### 📂 Image Node Management
-*   **`getImages(): PlacedImage[]`**: Returns the list of placed images.
-*   **`setImages(images: PlacedImage[])`**: Replaces all images and triggers layout updates.
-*   **`addImage(img: PlacedImage)`**: Add a new image node to the collage and select it.
-*   **`removeImage(imgId: string)`**: Delete an image node by ID.
-*   **`updateImage(imgId: string, updates: Partial<PlacedImage>)`**: Updates specific image configuration fields (e.g. coordinates, span, or per-image radius/shadow overrides) and schedules an immediate canvas repaint.
+const core = new CollageCore({
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 8,
+  padding2K: 60,
+  gap2K: 24,
+  background: {
+    color: "#ffffff",
+    transparent: false,
+  },
+  imageStyle: {
+    borderRadius2K: 24,
+    shadowBlur2K: 12,
+    shadowOffset2K: 8,
+    shadowOpacity: 0.2,
+  },
+  images: [
+    {
+      id: "image-1",
+      src: "/images/a.jpg",
+      name: "A",
+      gridX: 0,
+      gridY: 0,
+      span: 4,
+    },
+    {
+      id: "image-2",
+      src: "/images/b.jpg",
+      name: "B",
+      gridX: 4,
+      gridY: 0,
+      span: 4,
+    },
+  ],
+});
 
-#### 🕹️ Micro-Adjustments & Alignment
-*   **`modifyImageSpan(imgId: string, delta: number, gridRows: number): boolean`**: Scale target image span (+1/-1). Returns `true` if operation was successful (bounds and collisions checked).
-*   **`stepImagePosition(imgId: string, dir: "up" | "down" | "left" | "right", gridRows: number): boolean`**: Step coordinate position by 1 cell in grid coordinates.
-*   **`pushDownBelow(imgId: string, gridRows: number): boolean`**: Shift all images below the target block's bottom border downwards by 1 row.
-*   **`pullUpBelow(imgId: string): boolean`**: Pull up all images below the target block's bottom border upwards by 1 row if empty space permits.
+const dataUrl = await core.exportPNG(2048);
+```
 
-#### ⚡ Event Subscriptions
-*   **`onImagesChanged(callback: (images: PlacedImage[]) => void)`**: Triggered when any image is added, moved, scaled, updated, or deleted.
-*   **`onActiveImageChanged(callback: (id: string | null) => void)`**: Triggered when a grid node selection changes.
-*   **`onCellClicked(callback: (x: number, y: number) => void)`**: Triggered when clicking empty helper grid placeholder slots.
+## 🎛️ Quick Start: Visual Editor
 
-#### 💾 Exporter
-*   **`exportPNG(targetWidth: number = 2048): Promise<string>`**: Asynchronously preloads all grid images, constructs a high-resolution headless Canvas, renders clean output, and resolves to a PNG DataURL.
+```typescript
+import { CollageCore } from "aspect-grid-collageify/core";
+import { CanvasCollageEditor } from "aspect-grid-collageify/editor";
 
----
+const canvas = document.querySelector("canvas")!;
 
-## 📐 Geometric Alignment & Rendering Math
+const core = new CollageCore({
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 8,
+  padding2K: 60,
+  gap2K: 24,
+  images: [],
+});
 
-The collage layouts are calculated dynamically. The grid formulas convert grid coordinates into logical pixels:
+const editor = new CanvasCollageEditor(canvas, core, {
+  multiSelect: true,
+  keyboard: true,
+  dragMove: true,
+  dragSwap: true,
+  dragInsert: true,
+  quickReplace: true,
+});
 
-1. **Resolution Scale Calculation**:
-   $$\text{scale} = \frac{\text{width}}{2048}$$
-   This ensures visual sizing metrics defined as "2K" (padding, gap, radius, shadow) scale proportionally at higher resolutions.
-2. **Cell Geometric Formulations**:
-   $$\text{cellW} = \frac{\text{width} - 2 \cdot \text{padding} - (\text{gridColumns} - 1) \cdot \text{gap}}{\text{gridColumns}}$$
-   $$\text{cellH} = \frac{\text{cellW} + \text{gap}}{\text{imageRatioVal}} - \text{gap}$$
-3. **Collision Checks**:
-   $$\text{Collision} = \neg (X_{1} + S_{1} \le X_{2} \lor X_{2} + S_{2} \le X_{1} \lor Y_{1} + S_{1} \le Y_{2} \lor Y_{2} + S_{2} \le Y_{1})$$
+editor.on("change", (images) => {
+  console.log("images changed", images);
+});
 
----
+editor.on("cellclick", (placement) => {
+  // The application can open a file picker, then call editor.insertFiles(files).
+  editor.setPendingInsertPlacement(placement);
+});
+```
 
-## 🛠️ Run The Interactive Demo
+Convenience construction is also available:
 
-To test the library locally inside a browser:
+```typescript
+const editor = CanvasCollageEditor.create(canvas, options, editorOptions);
+const core = editor.core;
+```
 
-1. **Build the packages**:
-   ```bash
-   pnpm install
-   pnpm build
-   ```
-2. **Launch Developer Dev Server (Hot Module Reloading)**:
-   ```bash
-   pnpm dev
-   ```
-   Open `http://localhost:5173/` in a browser. Any updates to `./src/index.ts` will trigger instant updates in the browser canvas.
-3. **Static File Testing (CORS-free Offline mode)**:
-   You can also double-click `index.html` to open it in a browser directly via `file://`. The dual-protocol loader automatically loads the precompiled `./dist/index.global.js` UMD bundle, preventing local filesystem CORS blocks.
+## ⚙️ Configuration Example
 
----
+```typescript
+const options = {
+  containerRatio: "3:4",
+  imageRatio: "16:9",
+  gridColumns: 12,
+  padding2K: 60,
+  gap2K: 24,
+  background: {
+    color: "#ffffff",
+    transparent: false,
+  },
+  imageStyle: {
+    borderRadius2K: 24,
+    shadowBlur2K: 12,
+    shadowOffset2K: 8,
+    shadowOpacity: 0.2,
+  },
+  placementPreset: "medium",
+  images: [],
+};
+```
 
-## License
+## 📚 API
 
-MIT
+### `CollageCore`
+
+`CollageCore` is the core for collage state and final rendering. It does not bind DOM events, does not maintain selection, and does not draw editor overlays.
+
+#### Constructor
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `new CollageCore(options)` | `aspect-grid-collageify/core` | `options: CollageOptions` | `CollageCore` | Creates a collage core instance and initializes options and images. |
+
+#### State API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `getOptions()` | `CollageCore` | None | `CollageOptions` | Gets the current collage options. |
+| `setOptions(options)` | `CollageCore` | `options: CollageOptions` | `void` | Replaces all options and emits a change event. |
+| `updateOptions(options)` | `CollageCore` | `options: Partial<CollageOptions>` | `void` | Merges partial options and emits a change event. |
+| `getImages()` | `CollageCore` | None | `CollageImage[]` | Gets the current image list. |
+| `setImages(images)` | `CollageCore` | `images: CollageImage[]` | `void` | Replaces the image list; positions are normalized against the current grid columns. |
+| `onChange(callback)` | `CollageCore` | `callback: (images: CollageImage[], options: CollageOptions) => void` | `Unsubscribe` | Listens for option or image changes. Returns an unsubscribe function. |
+| `destroy()` | `CollageCore` | None | `void` | Clears listeners and image cache. |
+
+#### Geometry API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `getLayout(width, height)` | `CollageCore` | `width: number`, `height: number` | `CollageLayout` | Calculates layout from viewport size and current options. |
+| `toGridPoint(point, viewport)` | `CollageCore` | `point: GridPoint`, `viewport: DrawViewport` | `GridPoint` | Converts a canvas point to a grid point. |
+| `getImageRect(imageOrId, layout)` | `CollageCore` | `imageOrId: CollageImage \| string`, `layout: CollageLayout` | `ImageRect \| null` | Gets the canvas rectangle for an image. |
+| `hitTest(point, viewport)` | `CollageCore` | `point: GridPoint`, `viewport: DrawViewport` | `CollageImage \| null` | Finds the image hit by a canvas point. |
+| `getPlacementSpan(preset?)` | `CollageCore` | `preset?: PlacementPreset` | `number` | Calculates insert span from current grid columns and preset. |
+| `findSlots(options)` | `CollageCore` | `options: FindSlotsOptions` | `GridPlacement[]` | Finds empty slots where an image can be placed. |
+| `findFirstSlot(options)` | `CollageCore` | `options: FindSlotsOptions` | `GridPlacement \| null` | Finds the first available empty slot. |
+| `canPlace(placement, gridRows, ignoreIds?)` | `CollageCore` | `placement: GridPlacement`, `gridRows: number`, `ignoreIds?: string[]` | `boolean` | Checks whether a placement is valid, optionally ignoring specified image ids. |
+
+#### Image and Layout API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `insertImage(image)` | `CollageCore` | `image: CollageImage` | `CollageImage` | Inserts a complete image object. Caller provides id, src, gridX, gridY, and span. |
+| `insertImageAt(input, placement)` | `CollageCore` | `input: ImageInput`, `placement: GridPlacement` | `CollageImage` | Creates and inserts an image from input and explicit placement. |
+| `insertImages(inputs, options)` | `CollageCore` | `inputs: ImageInput[]`, `options: InsertImagesOptions` | `CollageImage[]` | Inserts multiple images and automatically places them into available slots. |
+| `updateImage(id, patch)` | `CollageCore` | `id: string`, `patch: Partial<CollageImage>` | `boolean` | Updates an image. Returns `true` on success. |
+| `removeImage(id)` | `CollageCore` | `id: string` | `boolean` | Removes one image. Returns `true` on success. |
+| `removeImages(ids)` | `CollageCore` | `ids: string[]` | `boolean` | Removes multiple images. Returns `true` on success. |
+| `replaceImage(id, input)` | `CollageCore` | `id: string`, `input: ImageInput` | `boolean` | Replaces image src, name, and style. |
+| `moveImage(id, target, gridRows)` | `CollageCore` | `id: string`, `target: GridPoint`, `gridRows: number` | `boolean` | Moves one image to a grid point. |
+| `moveImages(ids, delta, gridRows)` | `CollageCore` | `ids: string[]`, `delta: GridPoint`, `gridRows: number` | `boolean` | Moves multiple images by a grid delta. |
+| `moveImagesByDirection(ids, direction, gridRows)` | `CollageCore` | `ids: string[]`, `direction: MoveDirection`, `gridRows: number` | `boolean` | Moves multiple images by direction. |
+| `resizeImage(id, delta, gridRows)` | `CollageCore` | `id: string`, `delta: number`, `gridRows: number` | `boolean` | Changes one image span. |
+| `resizeImages(ids, delta, gridRows)` | `CollageCore` | `ids: string[]`, `delta: number`, `gridRows: number` | `boolean` | Changes multiple image spans. |
+| `swapImages(sourceId, targetId)` | `CollageCore` | `sourceId: string`, `targetId: string` | `boolean` | Swaps placement and span between two images. |
+| `pushBelow(id, rows, gridRows)` | `CollageCore` | `id: string`, `rows: number`, `gridRows: number` | `boolean` | Pushes images below the specified image downward. |
+| `pullBelow(id, rows?)` | `CollageCore` | `id: string`, `rows?: number` | `boolean` | Pulls images below the specified image upward. |
+
+#### Rendering and Export API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `draw(ctx, viewport)` | `CollageCore` | `ctx: CanvasRenderingContext2D`, `viewport: DrawViewport` | `void` | Draws the final collage to a canvas context. |
+| `renderToCanvas(width?)` | `CollageCore` | `width?: number` | `Promise<HTMLCanvasElement>` | Renders offscreen and returns a canvas. Height is calculated from container ratio. |
+| `exportPNG(width?)` | `CollageCore` | `width?: number` | `Promise<string>` | Exports a PNG Data URL. |
+| `exportBlob(width?, type?, quality?)` | `CollageCore` | `width?: number`, `type?: string`, `quality?: number` | `Promise<Blob>` | Exports a Blob. Supports PNG, JPEG, WebP, and other canvas-supported types. |
+| `getImageLoader()` | `CollageCore` | None | `ImageLoader` | Gets the internal image loader. Usually only needed for advanced use cases. |
+
+### `CanvasCollageEditor`
+
+`CanvasCollageEditor` is a canvas visual editing engine. It reads and writes collage state through `core`, and maintains selection, active image, drag state, and editor overlays.
+
+#### Constructor
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `new CanvasCollageEditor(canvas, core, options?)` | `aspect-grid-collageify/editor` | `canvas: HTMLCanvasElement`, `core: CollageCore`, `options?: CanvasCollageEditorOptions` | `CanvasCollageEditor` | Creates a visual editor from an existing Core instance. |
+| `CanvasCollageEditor.create(canvas, options, editorOptions?)` | `CanvasCollageEditor` | `canvas: HTMLCanvasElement`, `options: CollageOptions`, `editorOptions?: CanvasCollageEditorOptions` | `CanvasCollageEditor` | Convenience constructor. Creates `CollageCore` internally and returns an editor. |
+
+#### Base API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `core` | `CanvasCollageEditor` | None | `CollageCore` | The underlying Core instance. |
+| `getCore()` | `CanvasCollageEditor` | None | `CollageCore` | Gets the underlying Core instance. |
+| `render()` | `CanvasCollageEditor` | None | `void` | Redraws the final collage and editor overlays. |
+| `resize()` | `CanvasCollageEditor` | None | `void` | Re-renders using the current canvas size. |
+| `destroy()` | `CanvasCollageEditor` | None | `void` | Removes event listeners and releases Object URLs created by the editor. |
+
+#### Selection API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `getSelection()` | `CanvasCollageEditor` | None | `string[]` | Gets selected image ids. |
+| `setSelection(ids)` | `CanvasCollageEditor` | `ids: string[]` | `void` | Sets selected image ids. Invalid ids are ignored. |
+| `getActiveId()` | `CanvasCollageEditor` | None | `string \| null` | Gets the active image id. |
+| `setActiveId(id)` | `CanvasCollageEditor` | `id: string \| null` | `void` | Sets the active image and synchronizes selection. |
+| `clearSelection()` | `CanvasCollageEditor` | None | `void` | Clears selection and active image. |
+
+#### Input and File API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `handleKeyDown(event)` | `CanvasCollageEditor` | `event: KeyboardEvent` | `boolean` | Handles delete, directional movement, and shortcut resize operations. |
+| `insertFiles(files, options?)` | `CanvasCollageEditor` | `files: FileList \| File[]`, `options?: Partial<InsertImagesOptions>` | `Promise<CollageImage[]>` | Resolves and inserts files. If a pending placement exists, it is used first. |
+| `insertFilesAt(files, point)` | `CanvasCollageEditor` | `files: FileList \| File[]`, `point: GridPoint` | `Promise<CollageImage[]>` | Inserts files by canvas point. It prefers a hit empty slot, then falls back to grid placement. |
+| `replaceActiveFile(file)` | `CanvasCollageEditor` | `file: File` | `Promise<boolean>` | Replaces the active image with a file. |
+| `replaceFile(id, file)` | `CanvasCollageEditor` | `id: string`, `file: File` | `Promise<boolean>` | Replaces the specified image with a file. |
+| `setPendingInsertPlacement(placement)` | `CanvasCollageEditor` | `placement: GridPlacement \| null` | `void` | Sets the preferred placement for the next `insertFiles()` call. |
+
+#### Event API
+
+| API | Location | Parameters | Return | Description |
+| --- | --- | --- | --- | --- |
+| `on("change", callback)` | `CanvasCollageEditor` | `callback: (images: CollageImage[]) => void` | `Unsubscribe` | Fires after Core changes and the editor re-renders. |
+| `on("selectionchange", callback)` | `CanvasCollageEditor` | `callback: (ids: string[]) => void` | `Unsubscribe` | Fires when selection changes. |
+| `on("activechange", callback)` | `CanvasCollageEditor` | `callback: (id: string \| null) => void` | `Unsubscribe` | Fires when the active image changes. |
+| `on("cellclick", callback)` | `CanvasCollageEditor` | `callback: (placement: GridPlacement) => void` | `Unsubscribe` | Fires when an empty slot is clicked. |
+| `on("replacerequest", callback)` | `CanvasCollageEditor` | `callback: (id: string) => void` | `Unsubscribe` | Fires when an image is double-clicked for replacement. |
+| `on("error", callback)` | `CanvasCollageEditor` | `callback: (error: unknown) => void` | `Unsubscribe` | Fires on async errors such as file resolving or drag insertion failures. |
+
+### Type API
+
+#### Basic Types
+
+| Type | Location | Fields / Parameters | Description |
+| --- | --- | --- | --- |
+| `RatioOption` | `aspect-grid-collageify` | `"1:1" \| "3:4" \| "4:3" \| "16:9" \| "9:16" \| "custom" \| string` | Ratio option. Plain strings should use `w:h` format. |
+| `PlacementPreset` | `aspect-grid-collageify` | `"small" \| "medium" \| "large"` | Size preset for automatic image insertion. |
+| `MoveDirection` | `aspect-grid-collageify` | `"up" \| "down" \| "left" \| "right"` | Direction enum for movement. |
+| `GridPoint` | `aspect-grid-collageify` | `{ x: number; y: number }` | Grid point or canvas point, depending on API context. |
+| `GridPlacement` | `aspect-grid-collageify` | `{ gridX: number; gridY: number; span: number }` | Image placement in the grid. |
+| `ViewportSize` | `aspect-grid-collageify` | `{ width: number; height: number }` | Viewport size. |
+| `DrawViewport` | `aspect-grid-collageify` | `{ width: number; height: number }` | Draw viewport size. |
+| `Unsubscribe` | `aspect-grid-collageify` | `() => void` | Unsubscribe function. |
+
+#### Options and Image Types
+
+| Type | Location | Fields / Parameters | Description |
+| --- | --- | --- | --- |
+| `ImageStyleOptions` | `aspect-grid-collageify` | `borderRadius2K?: number`, `shadowBlur2K?: number`, `shadowOffset2K?: number`, `shadowOpacity?: number` | Image style options. Numeric values are scaled from a 2K canvas baseline. |
+| `CollageImage` | `aspect-grid-collageify` | `id: string`, `src: string`, `name: string`, `gridX: number`, `gridY: number`, `span: number`, `ImageStyleOptions` | Image model in the collage. |
+| `ImageInput` | `aspect-grid-collageify` | `id?: string`, `src: string`, `name?: string`, `style?: ImageStyleOptions` | Input model for inserting or replacing images. |
+| `CollageOptions` | `aspect-grid-collageify` | `containerRatio`, `imageRatio`, `gridColumns`, `padding2K`, `gap2K`, `background?`, `imageStyle?`, `images?`, `placementPreset?` | Core collage options. |
+
+#### Layout and Operation Types
+
+| Type | Location | Fields / Parameters | Description |
+| --- | --- | --- | --- |
+| `CollageLayout` | `aspect-grid-collageify` | `scale`, `padding`, `gap`, `cellW`, `cellH`, `gridRows`, `offsetX`, `offsetY`, `gridW`, `gridH`, `containerRatioVal`, `imageRatioVal` | Layout data calculated from options and viewport. |
+| `ImageRect` | `aspect-grid-collageify` | `{ x: number; y: number; w: number; h: number }` | Image rectangle in canvas coordinates. |
+| `FindSlotsOptions` | `aspect-grid-collageify` | `{ span: number; gridRows: number }` | Options for finding empty slots. |
+| `InsertImagesOptions` | `aspect-grid-collageify` | `{ span?: number; placementPreset?: PlacementPreset; gridRows: number }` | Options for batch image insertion. |
+| `CanvasCollageEditorOptions` | `aspect-grid-collageify/editor` | `multiSelect?`, `keyboard?`, `dragMove?`, `dragSwap?`, `dragInsert?`, `quickReplace?`, `preventDefaultFileDrop?`, `fileResolver?`, `overlay?` | Editor interaction options. |
+| `EditorOverlayOptions` | `aspect-grid-collageify` | `showBoundary?`, `showGridlines?`, `showSlots?`, `slotText?` | Editor overlay display options. |
+
+## 🛠️ Local Development
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Open the demo page to test canvas visual editing.
+
+Build package outputs:
+
+```bash
+pnpm build
+```
+
+The build outputs ESM, CommonJS, and type declarations for these package entries:
+
+```text
+aspect-grid-collageify
+aspect-grid-collageify/core
+aspect-grid-collageify/editor
+```
+
+## 🗂️ Project Structure
+
+```text
+src/
+  core.ts           # CollageCore: state, geometry, layout mutations, final rendering, and export
+  editor.ts         # CanvasCollageEditor: canvas visual editing
+  editor-render.ts  # editor overlay rendering
+  image-loader.ts   # image loading and cache
+  layout.ts         # pure geometry, grid, collision, and slot finding
+  render.ts         # final collage rendering
+  types.ts          # public types
+  index.ts          # root export entry
+```
+
+## 📄 License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+Copyright (c) 2026 liuxin2533
