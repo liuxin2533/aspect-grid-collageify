@@ -117,6 +117,8 @@ export class CanvasCollageEditor {
     if (!this.activeId && this.selectedIds.size === 0) return;
     this.activeId = null;
     this.selectedIds.clear();
+    this.hoveredImageId = null;
+    this.hoveredButtonId = null;
     this.emit("activechange", null);
     this.emit("selectionchange", []);
     this.render();
@@ -351,6 +353,7 @@ export class CanvasCollageEditor {
         this.activeId = this.selectedIds.has(hit.id) ? hit.id : selection[selection.length - 1] || null;
         this.emit("selectionchange", this.getSelection());
         this.emit("activechange", this.activeId);
+        this.hoveredImageId = hit.id;
         this.render();
         return;
       }
@@ -361,6 +364,7 @@ export class CanvasCollageEditor {
         this.emit("selectionchange", this.getSelection());
       }
       this.emit("activechange", this.activeId);
+      this.hoveredImageId = hit.id;
 
       if (this.options.dragMove) {
         const rect = this.core.getImageRect(hit, this.core.getLayout(viewport.width, viewport.height));
@@ -412,7 +416,16 @@ export class CanvasCollageEditor {
 
     const hit = this.core.hitTest(point, viewport);
     const pointInToolbar = this.pointInToolbar(point);
-    const nextHoveredImage = hit ? hit.id : pointInToolbar ? this.hoveredImageId : null;
+    let nextHoveredImage: string | null;
+    if (hit) {
+      nextHoveredImage = hit.id;
+    } else if (pointInToolbar) {
+      nextHoveredImage = this.hoveredImageId;
+    } else if (this.hoveredImageId && this.selectedIds.has(this.hoveredImageId)) {
+      nextHoveredImage = this.hoveredImageId;
+    } else {
+      nextHoveredImage = null;
+    }
 
     let nextHoveredButton: HoverToolbarAction | null = null;
     if (pointInToolbar) {
