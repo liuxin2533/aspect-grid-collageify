@@ -415,10 +415,10 @@ export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToo
   drawCorner("delete", deleteCx, deleteCy, DELETE_BG, DELETE_HOVER_BG);
   drawCorner("replace", replaceCx, replaceCy, REPLACE_BG, REPLACE_HOVER_BG);
 
-  // Position info pill (drawn on the inside top of the image so it is always visible,
-  // and on top of the toolbar so the user can read it even when buttons overlap)
+  // Position info pill (drawn at the inside-bottom-left of the image so it is always
+  // visible, and on top of the toolbar so the user can read it even when buttons overlap)
   if (showInfo) {
-    const infoText = `(col,row,span):(${image.gridX + 1},${image.gridY + 1},${image.span})`;
+    const infoText = `(${image.gridX + 1},${image.gridY + 1},${image.span})`;
     ctx.save();
     ctx.font = "11px monospace";
     ctx.textAlign = "center";
@@ -426,14 +426,14 @@ export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToo
     const textMetrics = ctx.measureText(infoText);
     const pillW = Math.ceil(textMetrics.width) + 16;
     const pillH = 22;
-    const pillX = Math.max(rect.x + 4, Math.min(rect.x + rect.w - pillW - 4, topCx - pillW / 2));
-    const pillY = rect.y + 4;
+    const pillX = Math.max(rect.x + 4, Math.min(rect.x + rect.w - pillW - 4, rect.x + 8));
+    const pillY = rect.y + rect.h - pillH - 4;
     ctx.fillStyle = INFO_PILL_BG;
     ctx.beginPath();
     ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
     ctx.fill();
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(infoText, topCx, pillY + pillH / 2);
+    ctx.fillText(infoText, pillX + pillW / 2, pillY + pillH / 2);
     ctx.restore();
   }
 
