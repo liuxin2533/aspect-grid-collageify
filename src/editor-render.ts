@@ -52,7 +52,6 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
     showSlots: true,
     slotText: "点击上传或拖入",
     showHoverToolbar: true,
-    toolbarPosition: "bottom" as const,
     ...options.overlay,
   };
 
@@ -66,6 +65,9 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
   if (overlay.showHoverToolbar && options.hoveredImageId && !options.drag?.imageId) {
     const hoveredImage = options.images.find((image) => image.id === options.hoveredImageId);
     if (hoveredImage) {
+      const showInfo =
+        options.hoveredImageId === options.activeId ||
+        (options.selectedIds ? options.selectedIds.has(options.hoveredImageId) : false);
       return drawHoverToolbar({
         ctx: options.ctx,
         image: hoveredImage,
@@ -73,7 +75,7 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
         canvasWidth: options.width,
         canvasHeight: options.height,
         hoveredButtonId: options.hoveredButtonId,
-        position: overlay.toolbarPosition,
+        showInfo,
         gridColumns: options.collageOptions.gridColumns,
       });
     }
@@ -252,25 +254,24 @@ export interface DrawHoverToolbarOptions {
   canvasWidth: number;
   canvasHeight: number;
   hoveredButtonId: HoverToolbarAction | null;
-  position: "bottom" | "top";
+  showInfo: boolean;
   gridColumns: number;
 }
 
-const TOOLBAR_BUTTON_SIZE = 24;
-const TOOLBAR_BUTTON_GAP = 4;
-const TOOLBAR_SEPARATOR_GAP = 8;
-const TOOLBAR_PADDING_X = 8;
-const TOOLBAR_PADDING_Y = 6;
-const TOOLBAR_RADIUS = 8;
-const TOOLBAR_OFFSET = 6;
-const TOOLBAR_INFO_GAP = 4;
-const TOOLBAR_INFO_RESERVED = 16;
-
-const TOOLBAR_GROUPS: HoverToolbarAction[][] = [
-  ["up", "down", "left", "right"],
-  ["shrink", "expand"],
-  ["delete", "replace"],
-];
+const DIRECTION_BUTTON_RADIUS = 11;
+const CORNER_BADGE_RADIUS = 13;
+const RESIZE_BUTTON_RADIUS = 6;
+const BUTTON_SHADOW = "0 2px 6px rgba(15, 23, 42, 0.18)";
+const BUTTON_BORDER = "rgba(148, 163, 184, 0.6)";
+const HOVER_BG = "rgba(79, 70, 229, 0.12)";
+const HOVER_GLYPH = "#4f46e5";
+const NORMAL_GLYPH = "#1e293b";
+const DISABLED_GLYPH = "#cbd5e1";
+const DELETE_BG = "rgba(239, 68, 68, 0.95)";
+const DELETE_HOVER_BG = "rgba(239, 68, 68, 1)";
+const REPLACE_BG = "rgba(79, 70, 229, 0.95)";
+const REPLACE_HOVER_BG = "rgba(67, 56, 202, 1)";
+const INFO_PILL_BG = "rgba(79, 70, 229, 0.92)";
 
 const TOOLBAR_LABELS: Record<HoverToolbarAction, string> = {
   up: "↑",
@@ -284,110 +285,165 @@ const TOOLBAR_LABELS: Record<HoverToolbarAction, string> = {
 };
 
 export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToolbarAction, HoverToolbarButtonRect> {
-  const { ctx, image, layout, canvasWidth, canvasHeight, hoveredButtonId, position, gridColumns } = options;
+  const { ctx, image, layout, canvasWidth, hoveredButtonId, showInfo, gridColumns } = options;
   const rect = getImageRect(image, layout);
 
-  const groupSizes = TOOLBAR_GROUPS.map((group) =>
-    group.length * TOOLBAR_BUTTON_SIZE + (group.length - 1) * TOOLBAR_BUTTON_GAP
-  );
-  const innerWidth =
-    groupSizes.reduce((sum, w) => sum + w, 0) +
-    Math.max(0, TOOLBAR_GROUPS.length - 1) * TOOLBAR_SEPARATOR_GAP;
-  const toolbarWidth = innerWidth + TOOLBAR_PADDING_X * 2;
-  const toolbarHeight = TOOLBAR_BUTTON_SIZE + TOOLBAR_PADDING_Y * 2;
-
-  const centerX = rect.x + rect.w / 2;
-  const toolbarX = Math.max(TOOLBAR_RADIUS, Math.min(canvasWidth - toolbarWidth - TOOLBAR_RADIUS, centerX - toolbarWidth / 2));
-
-  let toolbarY: number;
-  if (position === "top") {
-    toolbarY = Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
-  } else {
-    const desiredY = rect.y + rect.h + TOOLBAR_OFFSET;
-    toolbarY = desiredY + toolbarHeight + TOOLBAR_INFO_RESERVED + TOOLBAR_INFO_GAP <= canvasHeight
-      ? desiredY
-      : Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
-  }
-
-  const infoY = position === "top" || toolbarY < rect.y
-    ? toolbarY + toolbarHeight + TOOLBAR_INFO_GAP
-    : rect.y + rect.h + TOOLBAR_OFFSET;
-
-  const buttons = new Map<HoverToolbarAction, HoverToolbarButtonRect>();
   const enabled: Record<HoverToolbarAction, boolean> = {
     up: true,
     down: true,
     left: true,
     right: true,
-    shrink: image.span > 1,
-    expand: image.span < gridColumns,
     delete: true,
     replace: true,
+    shrink: image.span > 1,
+    expand: image.span < gridColumns,
   };
 
-  ctx.save();
-  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
-  ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
-  ctx.lineWidth = 1;
-  ctx.shadowColor = "rgba(15, 23, 42, 0.18)";
-  ctx.shadowBlur = 24;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 8;
-  ctx.beginPath();
-  ctx.roundRect(toolbarX, toolbarY, toolbarWidth, toolbarHeight, TOOLBAR_RADIUS);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+  const buttons = new Map<HoverToolbarAction, HoverToolbarButtonRect>();
 
-  ctx.save();
-  ctx.fillStyle = "rgba(148, 163, 184, 0.3)";
-  ctx.lineWidth = 1;
-  let cursorX = toolbarX + TOOLBAR_PADDING_X;
-  const buttonCenterY = toolbarY + TOOLBAR_PADDING_Y + TOOLBAR_BUTTON_SIZE / 2;
-  for (let g = 0; g < TOOLBAR_GROUPS.length; g++) {
-    const group = TOOLBAR_GROUPS[g];
-    if (g > 0) {
-      const sepX = cursorX + TOOLBAR_SEPARATOR_GAP / 2;
-      ctx.beginPath();
-      ctx.moveTo(sepX, toolbarY + TOOLBAR_PADDING_Y + 2);
-      ctx.lineTo(sepX, toolbarY + TOOLBAR_PADDING_Y + TOOLBAR_BUTTON_SIZE - 2);
-      ctx.stroke();
-      cursorX += TOOLBAR_SEPARATOR_GAP;
-    }
-    for (const action of group) {
-      const bx = cursorX;
-      const by = toolbarY + TOOLBAR_PADDING_Y;
-      const isHovered = hoveredButtonId === action && enabled[action];
-      if (isHovered) {
-        ctx.fillStyle = "rgba(79, 70, 229, 0.12)";
-        ctx.beginPath();
-        ctx.roundRect(bx, by, TOOLBAR_BUTTON_SIZE, TOOLBAR_BUTTON_SIZE, 6);
-        ctx.fill();
-      }
-      ctx.fillStyle = enabled[action]
-        ? (isHovered ? "#4f46e5" : "#1e293b")
-        : "#cbd5e1";
-      ctx.font = "600 14px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(TOOLBAR_LABELS[action], bx + TOOLBAR_BUTTON_SIZE / 2, buttonCenterY);
-      if (enabled[action]) {
-        buttons.set(action, { action, x: bx, y: by, w: TOOLBAR_BUTTON_SIZE, h: TOOLBAR_BUTTON_SIZE });
-      }
-      cursorX += TOOLBAR_BUTTON_SIZE + TOOLBAR_BUTTON_GAP;
-    }
-    if (group.length > 0) cursorX -= TOOLBAR_BUTTON_GAP;
+  const recordButton = (action: HoverToolbarAction, cx: number, cy: number, radius: number) => {
+    if (!enabled[action]) return;
+    buttons.set(action, { action, x: cx - radius, y: cy - radius, w: radius * 2, h: radius * 2 });
+  };
+
+  // Compute centers
+  const topCx = rect.x + rect.w / 2;
+  const bottomCx = topCx;
+  const midCy = rect.y + rect.h / 2;
+
+  // Resize buttons live BELOW the down button (if there's canvas room) and span 2 × 22 + 4 gap = 48px
+  const resizeTotalWidth = DIRECTION_BUTTON_RADIUS * 4 + 4;
+  const hasRoomBelow = rect.y + rect.h + CORNER_BADGE_RADIUS * 2 + 4 < options.canvasHeight;
+
+  // Direction buttons: top, left, right are always on the edge. Bottom direction is replaced by resize pair if they fit below.
+  // We always place all 4 direction buttons; if there's no room for resize pair, the resize pair goes next to the down button (shifted right by 2 button radii) — i.e. still visible on the bottom edge but slightly offset.
+  const downCy = rect.y + rect.h;
+
+  // Resize pair: below the bottom edge by ~14px (half a button + a small gap), centered horizontally on the image, with the shrink on the left, expand on the right
+  const resizeOffsetY = DIRECTION_BUTTON_RADIUS + 4;
+  const shrinkCx = hasRoomBelow ? bottomCx - DIRECTION_BUTTON_RADIUS - 2 : bottomCx;
+  const expandCx = hasRoomBelow ? bottomCx + DIRECTION_BUTTON_RADIUS + 2 : bottomCx;
+  const shrinkCy = hasRoomBelow ? downCy + resizeOffsetY : downCy;
+  const expandCy = shrinkCy;
+
+  // Corner badges: aligned to the image's top-right and bottom-right corners, but offset outward by half a badge so half the badge is inside, half outside
+  const deleteCx = rect.x + rect.w;
+  const deleteCy = rect.y;
+  const replaceCx = rect.x + rect.w;
+  const replaceCy = rect.y + rect.h;
+
+  // Position info pill (only when selected/locked)
+  if (showInfo) {
+    const infoText = `col ${image.gridX + 1} · row ${image.gridY + 1} · span ${image.span}`;
+    ctx.save();
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const textMetrics = ctx.measureText(infoText);
+    const pillW = Math.ceil(textMetrics.width) + 16;
+    const pillH = 22;
+    const pillX = Math.max(8, Math.min(canvasWidth - pillW - 8, topCx - pillW / 2));
+    const pillY = rect.y - pillH + 1; // overlap image top edge by 1px
+    ctx.fillStyle = INFO_PILL_BG;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(infoText, topCx, pillY + pillH / 2);
+    ctx.restore();
   }
-  ctx.restore();
 
-  ctx.save();
-  ctx.fillStyle = "#64748b";
-  ctx.font = "11px monospace";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  const infoText = `col ${image.gridX + 1} · row ${image.gridY + 1} · span ${image.span}`;
-  ctx.fillText(infoText, centerX, infoY);
-  ctx.restore();
+  // Direction buttons (top, left, right, down)
+  const drawDirection = (action: HoverToolbarAction, cx: number, cy: number) => {
+    const r = DIRECTION_BUTTON_RADIUS;
+    const isHovered = hoveredButtonId === action && enabled[action];
+    ctx.save();
+    ctx.shadowColor = BUTTON_SHADOW;
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = isHovered ? HOVER_BG : "rgba(255, 255, 255, 0.98)";
+    ctx.strokeStyle = enabled[action] ? BUTTON_BORDER : "rgba(203, 213, 225, 0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = enabled[action] ? (isHovered ? HOVER_GLYPH : NORMAL_GLYPH) : DISABLED_GLYPH;
+    ctx.font = "600 13px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(TOOLBAR_LABELS[action], cx, cy + 0.5);
+    ctx.restore();
+
+    recordButton(action, cx, cy, r);
+  };
+
+  drawDirection("up", topCx, rect.y);
+  drawDirection("left", rect.x, midCy);
+  drawDirection("right", rect.x + rect.w, midCy);
+  drawDirection("down", bottomCx, downCy);
+
+  // Resize buttons
+  const drawResize = (action: HoverToolbarAction, cx: number, cy: number) => {
+    const r = DIRECTION_BUTTON_RADIUS;
+    const isHovered = hoveredButtonId === action && enabled[action];
+    ctx.save();
+    ctx.shadowColor = BUTTON_SHADOW;
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = isHovered ? HOVER_BG : "rgba(255, 255, 255, 0.98)";
+    ctx.strokeStyle = enabled[action] ? BUTTON_BORDER : "rgba(203, 213, 225, 0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(cx - r, cy - r, r * 2, r * 2, RESIZE_BUTTON_RADIUS);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = enabled[action] ? (isHovered ? HOVER_GLYPH : NORMAL_GLYPH) : DISABLED_GLYPH;
+    ctx.font = "600 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(TOOLBAR_LABELS[action], cx, cy + 0.5);
+    ctx.restore();
+
+    recordButton(action, cx, cy, r);
+  };
+
+  drawResize("shrink", shrinkCx, shrinkCy);
+  drawResize("expand", expandCx, expandCy);
+
+  // Corner badges (delete + replace)
+  const drawCorner = (action: HoverToolbarAction, cx: number, cy: number, baseColor: string, hoverColor: string) => {
+    const r = CORNER_BADGE_RADIUS;
+    const isHovered = hoveredButtonId === action && enabled[action];
+    ctx.save();
+    ctx.shadowColor = BUTTON_SHADOW;
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = isHovered ? hoverColor : baseColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "600 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(TOOLBAR_LABELS[action], cx, cy + 0.5);
+    ctx.restore();
+
+    recordButton(action, cx, cy, r);
+  };
+
+  drawCorner("delete", deleteCx, deleteCy, DELETE_BG, DELETE_HOVER_BG);
+  drawCorner("replace", replaceCx, replaceCy, REPLACE_BG, REPLACE_HOVER_BG);
 
   return buttons;
 }
