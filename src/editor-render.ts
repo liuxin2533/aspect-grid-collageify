@@ -8,6 +8,8 @@ export interface EditorOverlayOptions {
   showGridlines?: boolean;
   showSlots?: boolean;
   slotText?: string;
+  showHoverToolbar?: boolean;
+  toolbarPosition?: "bottom" | "top";
 }
 
 export interface DragOverlayState {
