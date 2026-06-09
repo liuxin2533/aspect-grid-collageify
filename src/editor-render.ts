@@ -70,6 +70,7 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
         ctx: options.ctx,
         image: hoveredImage,
         layout: options.layout,
+        canvasWidth: options.width,
         canvasHeight: options.height,
         hoveredButtonId: options.hoveredButtonId,
         position: overlay.toolbarPosition,
@@ -248,6 +249,7 @@ export interface DrawHoverToolbarOptions {
   ctx: CanvasRenderingContext2D;
   image: CollageImage;
   layout: CollageLayout;
+  canvasWidth: number;
   canvasHeight: number;
   hoveredButtonId: HoverToolbarAction | null;
   position: "bottom" | "top";
@@ -262,7 +264,7 @@ const TOOLBAR_PADDING_Y = 6;
 const TOOLBAR_RADIUS = 8;
 const TOOLBAR_OFFSET = 6;
 const TOOLBAR_INFO_GAP = 4;
-const TOOLBAR_INFO_HEIGHT = 16;
+const TOOLBAR_INFO_RESERVED = 16;
 
 const TOOLBAR_GROUPS: HoverToolbarAction[][] = [
   ["up", "down", "left", "right"],
@@ -281,19 +283,8 @@ const TOOLBAR_LABELS: Record<HoverToolbarAction, string> = {
   replace: "↻",
 };
 
-const TOOLBAR_TITLES: Record<HoverToolbarAction, string> = {
-  up: "上移",
-  down: "下移",
-  left: "左移",
-  right: "右移",
-  shrink: "缩小",
-  expand: "放大",
-  delete: "删除",
-  replace: "替换",
-};
-
 export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToolbarAction, HoverToolbarButtonRect> {
-  const { ctx, image, layout, canvasHeight, hoveredButtonId, position, gridColumns } = options;
+  const { ctx, image, layout, canvasWidth, canvasHeight, hoveredButtonId, position, gridColumns } = options;
   const rect = getImageRect(image, layout);
 
   const groupSizes = TOOLBAR_GROUPS.map((group) =>
@@ -306,14 +297,14 @@ export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToo
   const toolbarHeight = TOOLBAR_BUTTON_SIZE + TOOLBAR_PADDING_Y * 2;
 
   const centerX = rect.x + rect.w / 2;
-  const toolbarX = Math.max(TOOLBAR_RADIUS, Math.min(canvasHeight - toolbarWidth - TOOLBAR_RADIUS, centerX - toolbarWidth / 2));
+  const toolbarX = Math.max(TOOLBAR_RADIUS, Math.min(canvasWidth - toolbarWidth - TOOLBAR_RADIUS, centerX - toolbarWidth / 2));
 
   let toolbarY: number;
   if (position === "top") {
     toolbarY = Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
   } else {
     const desiredY = rect.y + rect.h + TOOLBAR_OFFSET;
-    toolbarY = desiredY + toolbarHeight + TOOLBAR_INFO_HEIGHT + TOOLBAR_INFO_GAP <= canvasHeight
+    toolbarY = desiredY + toolbarHeight + TOOLBAR_INFO_RESERVED + TOOLBAR_INFO_GAP <= canvasHeight
       ? desiredY
       : Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
   }
