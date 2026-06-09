@@ -155,7 +155,7 @@ export class CanvasCollageEditor {
       imageLoader: this.core.getImageLoader(),
       skipImageIds: dragImageId ? new Set([dragImageId]) : undefined,
     });
-    drawEditorOverlay({
+    this.toolbarButtons = drawEditorOverlay({
       ctx: this.ctx,
       width,
       height,
@@ -169,6 +169,8 @@ export class CanvasCollageEditor {
       activeId: this.activeId,
       drag: this.drag,
       overlay: this.options.overlay,
+      hoveredImageId: this.hoveredImageId,
+      hoveredButtonId: this.hoveredButtonId,
     });
     this.ctx.restore();
   }
@@ -247,15 +249,18 @@ export class CanvasCollageEditor {
     const onMouseDown = (event: MouseEvent) => this.handleMouseDown(event);
     const onMouseMove = (event: MouseEvent) => this.handleMouseMove(event);
     const onMouseUp = () => this.handleMouseUp();
+    const onMouseLeave = () => this.handleMouseLeave();
     const onDblClick = (event: MouseEvent) => this.handleDoubleClick(event);
     const onKeyDown = (event: KeyboardEvent) => this.handleKeyDown(event);
 
     this.canvas.addEventListener("mousedown", onMouseDown);
     this.canvas.addEventListener("mousemove", onMouseMove);
+    this.canvas.addEventListener("mouseleave", onMouseLeave);
     this.canvas.addEventListener("dblclick", onDblClick);
     window.addEventListener("mouseup", onMouseUp);
     this.disposers.push(() => this.canvas.removeEventListener("mousedown", onMouseDown));
     this.disposers.push(() => this.canvas.removeEventListener("mousemove", onMouseMove));
+    this.disposers.push(() => this.canvas.removeEventListener("mouseleave", onMouseLeave));
     this.disposers.push(() => this.canvas.removeEventListener("dblclick", onDblClick));
     this.disposers.push(() => window.removeEventListener("mouseup", onMouseUp));
 
@@ -318,6 +323,23 @@ export class CanvasCollageEditor {
   private handleMouseDown(event: MouseEvent) {
     const point = this.getMousePoint(event);
     const viewport = this.getViewport();
+
+    if (this.hoveredImageId && this.toolbarButtons.size > 0) {
+      for (const button of this.toolbarButtons.values()) {
+        if (
+          point.x >= button.x &&
+          point.x <= button.x + button.w &&
+          point.y >= button.y &&
+          point.y <= button.y + button.h
+        ) {
+          this.emit("toolbaraction", button.action, this.hoveredImageId);
+          this.runToolbarAction(button.action, this.hoveredImageId);
+          event.preventDefault();
+          return;
+        }
+      }
+    }
+
     const hit = this.core.hitTest(point, viewport);
 
     if (hit) {
@@ -388,10 +410,54 @@ export class CanvasCollageEditor {
       return;
     }
 
-    const slot = this.getHitSlot(point);
-    this.hoveredSlot = slot ? { x: slot.gridX, y: slot.gridY } : null;
-    this.canvas.style.cursor = slot ? "pointer" : this.core.hitTest(point, viewport) ? "move" : "default";
-    this.render();
+    const hit = this.core.hitTest(point, viewport);
+    const pointInToolbar = this.pointInToolbar(point);
+    const nextHoveredImage = hit ? hit.id : pointInToolbar ? this.hoveredImageId : null;
+
+    let nextHoveredButton: HoverToolbarAction | null = null;
+    if (pointInToolbar) {
+      for (const button of this.toolbarButtons.values()) {
+        if (
+          point.x >= button.x &&
+          point.x <= button.x + button.w &&
+          point.y >= button.y &&
+          point.y <= button.y + button.h
+        ) {
+          nextHoveredButton = button.action;
+          break;
+        }
+      }
+    }
+
+    const hoveredSlot = hit ? null : this.getHitSlot(point);
+    this.hoveredSlot = hoveredSlot ? { x: hoveredSlot.gridX, y: hoveredSlot.gridY } : null;
+
+    const imageChanged = nextHoveredImage !== this.hoveredImageId;
+    const buttonChanged = nextHoveredButton !== this.hoveredButtonId;
+    this.hoveredImageId = nextHoveredImage;
+    this.hoveredButtonId = nextHoveredButton;
+
+    if (pointInToolbar) this.canvas.style.cursor = "pointer";
+    else if (hit) this.canvas.style.cursor = "move";
+    else if (this.hoveredSlot) this.canvas.style.cursor = "pointer";
+    else this.canvas.style.cursor = "default";
+
+    if (imageChanged || buttonChanged) this.render();
+  }
+
+  private pointInToolbar(point: GridPoint): boolean {
+    if (!this.hoveredImageId) return false;
+    for (const button of this.toolbarButtons.values()) {
+      if (
+        point.x >= button.x &&
+        point.x <= button.x + button.w &&
+        point.y >= button.y &&
+        point.y <= button.y + button.h
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private handleMouseUp() {
@@ -425,6 +491,46 @@ export class CanvasCollageEditor {
     if (!this.options.quickReplace) return;
     const hit = this.core.hitTest(this.getMousePoint(event), this.getViewport());
     if (hit) this.emit("replacerequest", hit.id);
+  }
+
+  private handleMouseLeave() {
+    if (this.hoveredImageId !== null || this.hoveredButtonId !== null) {
+      this.hoveredImageId = null;
+      this.hoveredButtonId = null;
+      this.render();
+    }
+  }
+
+  private runToolbarAction(action: HoverToolbarAction, imageId: string) {
+    const rows = this.getCurrentGridRows();
+    let changed = false;
+    switch (action) {
+      case "up":
+      case "down":
+      case "left":
+      case "right":
+        changed = this.core.moveImagesByDirection([imageId], action, rows);
+        break;
+      case "shrink":
+        changed = this.core.resizeImages([imageId], -1, rows);
+        break;
+      case "expand":
+        changed = this.core.resizeImages([imageId], 1, rows);
+        break;
+      case "delete":
+        changed = this.core.removeImages([imageId]);
+        if (changed && this.activeId === imageId) {
+          this.activeId = null;
+          this.selectedIds = new Set();
+          this.emit("activechange", null);
+          this.emit("selectionchange", []);
+        }
+        break;
+      case "replace":
+        this.emit("replacerequest", imageId);
+        return;
+    }
+    if (!changed) this.render();
   }
 
   private getInsertionPlacementAt(point: GridPoint): GridPlacement {
