@@ -519,11 +519,9 @@ export class CanvasCollageEditor {
         break;
       case "delete":
         changed = this.core.removeImages([imageId]);
-        if (changed && this.activeId === imageId) {
-          this.activeId = null;
-          this.selectedIds = new Set();
-          this.emit("activechange", null);
-          this.emit("selectionchange", []);
+        if (changed) {
+          this.hoveredImageId = null;
+          this.hoveredButtonId = null;
         }
         break;
       case "replace":
