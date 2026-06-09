@@ -958,3 +958,34 @@ git commit -m "chore: bump to 2.1.0 and document hover toolbar"
 **Placeholder scan:** No TBDs/TODOs. Each code block is complete and runnable as written. No "similar to" cross-references between tasks.
 
 **Type consistency:** `HoverToolbarAction` is defined once in Task 1 and reused identically across Tasks 2, 3, 4, 5, 6, 7. The `HoverToolbarButtonRect` type is defined once in Task 4 and used in Tasks 5, 6, 7. The buttons map type matches between `drawHoverToolbar` return and `toolbarButtons` field.
+
+---
+
+## Implementation Revisions (post-merge)
+
+The implementation in this branch diverged from the spec/plan in two material ways. Both were driven by user feedback during the manual smoke test in Task 8.
+
+### Revision 1: Layout — bottom-centered pill → perimeter/corner badges
+
+**Problem:** The original spec called for a single bottom-pill toolbar with `↑↓←→ | −+ | ×↻` buttons in one row. During the manual smoke test, the user found the toolbar unusable: hovering the mouse off the image to reach a button caused the toolbar to disappear (because the old `handleMouseMove` cleared `hoveredImageId` when the mouse left the image rect). Clicking any button was effectively impossible.
+
+**Fix (commit `16c516c`):** Replaced the single-pill layout with 8 separate badges placed ON the image edges and corners, so each badge overlaps the image by ~half its diameter. The mouse can move from the image onto a button without leaving the image area.
+
+- 4 direction buttons (up/down/left/right): 22px white circles on the image's four edges, centered.
+- 2 corner badges (delete/replace): 26px solid-color circles at the top-right and bottom-right corners.
+- 2 resize buttons (shrink/expand): 22px rounded squares centered on the bottom edge, placed below the down button when canvas has room.
+- Position info pill (`col x · row y · span s`): moved from the old "above-the-toolbar" line to a small indigo capsule at the top center of the image, drawn only when the image is active or in `selectedIds`.
+
+The interface `DrawHoverToolbarOptions` lost its `position: "bottom" | "top"` field (no more top/bottom flipping) and gained `showInfo: boolean`. The `EditorOverlayOptions.toolbarPosition` field is kept in the public type for backward compat but is now ignored by `drawEditorOverlay`.
+
+### Revision 2: Interaction mode — hover-only → "hover preview + selected lock"
+
+**Problem:** The original spec had the toolbar appear on hover and disappear when the mouse left the image. Even with the new layout, the toolbar would only appear while hovering. Users expect toolbar-style UIs to stay visible once an image is selected (Figma / 在线编辑器 convention).
+
+**Fix (commit `385dbdc`):** `handleMouseMove` now treats `hoveredImageId` as locked when the id is in `selectedIds` — moving the mouse to empty canvas does NOT clear it. The lock releases only when `clearSelection()` runs (user clicks empty canvas) or when the image is removed.
+
+- `handleMouseMove`: new logic — `nextHoveredImage` stays as `hoveredImageId` if the id is in `selectedIds`, even when `hit` is null and the point is not in a toolbar button.
+- `handleMouseDown` (image-click branch): explicitly sets `this.hoveredImageId = hit.id` so the toolbar appears immediately, even on touch devices where the mouse didn't hover first.
+- `clearSelection`: now also clears `hoveredImageId` and `hoveredButtonId` so the next render hides the toolbar without waiting for a `mousemove`.
+
+The `drawEditorOverlay` call site computes `showInfo = hoveredImageId === activeId || selectedIds.has(hoveredImageId)` and passes it to `drawHoverToolbar`, which is what makes the position pill appear in lock state but not in hover-preview state.
