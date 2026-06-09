@@ -1,7 +1,7 @@
 import { getImageRect } from "./layout";
 import { drawCollageImage } from "./render";
 import type { ImageLoader } from "./image-loader";
-import type { CollageImage, CollageLayout, CollageOptions, GridPlacement, GridPoint } from "./types";
+import type { CollageImage, CollageLayout, CollageOptions, GridPlacement, GridPoint, HoverToolbarAction } from "./types";
 
 export interface EditorOverlayOptions {
   showBoundary?: boolean;
@@ -19,6 +19,14 @@ export interface DragOverlayState {
   overCell: GridPoint | null;
 }
 
+export interface HoverToolbarButtonRect {
+  action: HoverToolbarAction;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface DrawEditorOverlayOptions {
   ctx: CanvasRenderingContext2D;
   width: number;
@@ -33,14 +41,18 @@ export interface DrawEditorOverlayOptions {
   activeId: string | null;
   drag: DragOverlayState | null;
   overlay?: EditorOverlayOptions;
+  hoveredImageId: string | null;
+  hoveredButtonId: HoverToolbarAction | null;
 }
 
-export function drawEditorOverlay(options: DrawEditorOverlayOptions) {
+export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverToolbarAction, HoverToolbarButtonRect> {
   const overlay = {
     showBoundary: true,
     showGridlines: true,
     showSlots: true,
     slotText: "点击上传或拖入",
+    showHoverToolbar: true,
+    toolbarPosition: "bottom" as const,
     ...options.overlay,
   };
 
@@ -50,6 +62,22 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions) {
   drawSelection(options);
   drawDragPreview(options);
   drawFloatingDraggedImage(options);
+
+  if (overlay.showHoverToolbar && options.hoveredImageId && !options.drag?.imageId) {
+    const hoveredImage = options.images.find((image) => image.id === options.hoveredImageId);
+    if (hoveredImage) {
+      return drawHoverToolbar({
+        ctx: options.ctx,
+        image: hoveredImage,
+        layout: options.layout,
+        canvasHeight: options.height,
+        hoveredButtonId: options.hoveredButtonId,
+        position: overlay.toolbarPosition,
+        gridColumns: options.collageOptions.gridColumns,
+      });
+    }
+  }
+  return new Map();
 }
 
 function drawBoundary(ctx: CanvasRenderingContext2D, width: number, height: number, layout: CollageLayout) {
