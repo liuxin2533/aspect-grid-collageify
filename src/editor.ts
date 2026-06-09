@@ -1,12 +1,13 @@
 import { CollageCore } from "./core";
 import { getImageRect, getPlacementSpan, toGridPoint } from "./layout";
 import { drawCollage } from "./render";
-import { drawEditorOverlay, type DragOverlayState, type EditorOverlayOptions } from "./editor-render";
+import { drawEditorOverlay, type DragOverlayState, type EditorOverlayOptions, type HoverToolbarButtonRect } from "./editor-render";
 import type {
   CollageImage,
   CollageOptions,
   GridPlacement,
   GridPoint,
+  HoverToolbarAction,
   ImageInput,
   InsertImagesOptions,
   MoveDirection,
@@ -31,6 +32,7 @@ type EditorEventMap = {
   activechange: (id: string | null) => void;
   cellclick: (placement: GridPlacement) => void;
   replacerequest: (id: string) => void;
+  toolbaraction: (action: HoverToolbarAction, imageId: string) => void;
   error: (error: unknown) => void;
 };
 
@@ -52,6 +54,9 @@ export class CanvasCollageEditor {
   private selectedIds = new Set<string>();
   private activeId: string | null = null;
   private hoveredSlot: GridPoint | null = null;
+  private hoveredImageId: string | null = null;
+  private hoveredButtonId: HoverToolbarAction | null = null;
+  private toolbarButtons: Map<HoverToolbarAction, HoverToolbarButtonRect> = new Map();
   private pendingInsertPlacement: GridPlacement | null = null;
   private drag: DragOverlayState | null = null;
   private eventCallbacks: Partial<Record<keyof EditorEventMap, Set<(...args: unknown[]) => void>>> = {};
