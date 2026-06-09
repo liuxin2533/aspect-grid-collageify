@@ -4,6 +4,11 @@ export type PlacementPreset = "small" | "medium" | "large";
 
 export type MoveDirection = "up" | "down" | "left" | "right";
 
+export type HoverToolbarAction =
+  | "up" | "down" | "left" | "right"
+  | "shrink" | "expand"
+  | "delete" | "replace";
+
 export interface GridPoint {
   x: number;
   y: number;
