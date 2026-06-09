@@ -71,66 +71,108 @@ export type HoverToolbarAction =
 
 ## 4. Behavior Specification
 
-### 4.1 显示与隐藏
+### 4.1 显示与隐藏（"hover 预览 + 选中锁定"模式）
 
 | 触发条件 | 行为 |
 |---|---|
-| 鼠标 hover 命中某张图片（hitTest 返回非 null） | `hoveredImageId` 设为该图片 id，工具栏显示 |
-| 鼠标 hover 到该图片的工具栏矩形内部 | 维持 `hoveredImageId` 不变 |
-| 鼠标移开图片矩形和工具栏矩形都不在的区域 | `hoveredImageId` 设为 null，工具栏隐藏 |
+| 鼠标 hover 命中某张未被选中的图片 | 工具栏以"预览态"出现 |
+| 鼠标 hover 命中某张已被选中（active 或在 selectedIds 中）的图片 | 工具栏以"锁定态"出现，鼠标移到工具栏按钮上时工具栏保持 |
+| 该图片被选中（activeId = imageId，或在 selectedIds 中） | 工具栏以"锁定态"出现，鼠标离开图片矩形 + 工具栏按钮矩形 仍保持 |
+| 用户点击空白处（既不在任何图片也不在任何按钮上） | 工具栏消失 |
+| 选中另一张图（点击另一张图） | 工具栏转移到新图 |
 | 开始拖拽图片（`dragMove`） | 工具栏隐藏，拖拽期间不显示 |
-| mouseleave canvas | `hoveredImageId` 设为 null |
+| mouseleave canvas | 工具栏隐藏 |
 | 配置 `showHoverToolbar: false` | 永不显示 |
 
-### 4.2 工具栏位置与外观
+实现策略：
+- `hoveredImageId` 仍为单一字段，但被选中的图片**持续**保留在 `hoveredImageId`（或在 `handleMouseDown` 时设置 `setActiveId(hit.id)` → 触发 `activechange` → render）
+- `handleMouseMove` 中当 `hit` 命中时，将 `hoveredImageId` 设为 `hit.id`
+- 当鼠标移到按钮上且当前图片在 `selectedIds` 中时，`hoveredImageId` 保持不变
+- 当鼠标移到空白处但当前图片仍在 `selectedIds` 中时，`hoveredImageId` 也保持
+- 当鼠标移到另一张图：`hoveredImageId` 切到新图
+- 当用户点击空白处：`clearSelection()` 清空 `selectedIds` 和 `activeId`，下一次 render 时 `hoveredImageId === null`
 
-- 默认位于图片底部下方 6px（CSS px）间隙
-- 若图片底部 + 工具栏高度 + 6px 超过 canvas 高度，则翻折到图片顶部上方 6px
-- 居中于图片水平方向
-- 工具栏高度 ≈ 32px，按钮尺寸 24×24 px，圆角 8px
-- 背景：`rgba(255,255,255,0.96)`，1px `rgba(148,163,184,0.4)` 边框
-- 阴影：`0 8px 24px rgba(15,23,42,0.18)`
-- 文字色：`#1e293b`，`12px sans-serif`，`font-weight: 600`
-- Hover 按钮：`rgba(79,70,229,0.12)` 背景 + `#4f46e5` 文字
-- Active 按钮：`rgba(79,70,229,0.2)` 背景
-- 禁用按钮（如 `image.span === 1` 时 `−`）：`#cbd5e1` 文字，不响应 hover
+### 4.2 工具栏位置与外观（角标式布局）
 
-### 4.3 按钮布局
+新设计摒弃底部居中横排工具栏，改为**全方位角标**：
 
-从左到右，按钮间 4px 间距：
+- **方向按钮（↑ ↓ ← →）**：在图片四边的中点位置，圆点/方块，22px 直径，hover 时高亮
+- **删除按钮（×）**：右上角角标，圆形红色背景
+- **替换按钮（↻）**：右下角角标，圆形靛蓝背景
+- **缩放按钮（− / +）**：图片底部居中（透明背景，仅 hover 时显形，间距 4px）
+- **位置信息胶囊** `col x · row y · span s`：图片顶部居中，**仅在选中状态时显示**（与 `drawSelection` 选中外框配色一致），风格为半透靛蓝胶囊
+
+按钮圆角 11px（圆形），尺寸 22px（缩放/方向）+ 26px（角标）。角标按钮比方向按钮略大以突出动作含义。
+
+### 4.3 按钮布局（按位置）
+
 ```
-[↑] [↓] [←] [→] | [-] [+] | [×] [↻]
+                       [col 1 · row 1 · span 2]      ← 顶部居中胶囊（仅选中态）
+  
+                          ●                           ← 顶部中点 方向"↑"按钮
+   ●                                               ●
+   ←               (image content)                  →  ← 左右中点 方向按钮
+   ●                                               ●
+  
+                          ●                           ← 底部中点 方向"↓"按钮
+                   [ − ]   [ + ]                     ← 缩放按钮（图片底部居中）
+                                          ●          ← 右上角 删除"×"角标
+                                          ●          ← 右下角 替换"↻"角标
 ```
 
-中间用 `|` 分隔符（仅视觉，垂直细线 `rgba(148,163,184,0.3)`）。
-
-位置信息文本单独一行/独立展示：图片底部正下方 6px 是工具栏，位置信息以"col x · row y · span s"的形式附加在工具栏**上方 4px**（即图片与工具栏之间），居中显示，`#64748b` 颜色，`11px monospace`。
-
-实际渲染顺序（从下到上）：图片 → 位置信息行 → 工具栏按钮行。当翻折到顶部时，位置信息跟随工具栏，但位于工具栏下方 4px。
+- 4 个方向按钮：圆点（22px 直径），白色背景 + 1px 灰色边框 + 阴影，hover 时变靛蓝
+- 2 个角标按钮：圆形（26px 直径），实心背景色（删除红、替换靛蓝），白色符号
+- 2 个缩放按钮：圆角矩形（22×22px），hover 时显示背景，符号居中
+- 位置信息胶囊：仅选中时显示，胶囊形状，`rgba(79,70,229,0.92)` 背景，白色 11px monospace 文字
 
 ### 4.4 命中检测
 
 `drawHoverToolbar` 在渲染时构造并返回 `Map<HoverToolbarAction, Rect>`（屏幕坐标），存入实例字段 `toolbarButtons: Map<HoverToolbarAction, Rect> | null`。
 
-`handleMouseMove` 流程增加：
+`handleMouseMove` 流程（lock-on-select 模式）：
 ```
 if (drag) ...（保持原状，工具栏不显示）
-else if (toolbarButtons) {
-  检查 point 是否落在某个按钮矩形 → 更新 hoveredButtonId
-  检查 point 是否落在图片矩形或任何按钮矩形内 → 维持 hoveredImageId
-  否则 hoveredImageId = null
+
+// 工具栏按钮 hover 检测（与之前一致）
+let nextHoveredButton = 在 toolbarButtons 中命中按钮 → 该 action : null
+
+// 图片 hover 检测（"hover 预览 + 选中锁定"）
+const hit = core.hitTest(point, viewport);
+const inToolbarButton = nextHoveredButton !== null;
+const selectedOrHovered = hit && (selectedIds.has(hit.id) || inToolbarButton);
+if (hit) {
+  // 命中图片：要么是"hover 预览"要么是"选中锁定"
+  this.hoveredImageId = hit.id;
+} else if (inToolbarButton) {
+  // 鼠标在按钮上但不在图片：维持当前 hoveredImageId（如果它还在 selectedIds）
+  if (!this.selectedIds.has(this.hoveredImageId ?? "")) this.hoveredImageId = null;
+} else {
+  // 鼠标在空白处
+  if (this.selectedIds.has(this.hoveredImageId ?? "")) {
+    // 当前图片被选中：维持锁定
+    // do nothing
+  } else {
+    // 当前图片未被选中：清掉预览
+    this.hoveredImageId = null;
+  }
 }
 ```
 
 `handleMouseDown` 流程增加：
 ```
-if (hoveredImageId && toolbarButtons) {
-  检查点是否落在某个按钮矩形内
-  → emit("toolbaraction", action, imageId)
-  → 若未被 preventDefault：执行默认行为
-  → return（不进入图片拖拽/选中逻辑）
+if (this.hoveredImageId && this.toolbarButtons.size > 0) {
+  for (const button of this.toolbarButtons.values()) {
+    if (point in button.rect) {
+      this.emit("toolbaraction", action, imageId);
+      this.runToolbarAction(action, imageId);
+      event.preventDefault();
+      return;
+    }
+  }
 }
 ```
+
+**关键变化：** 当被选中的图片被移出 hover 区域（鼠标移到空白处）时，`hoveredImageId` 保持不变（锁定），因为该图片在 `selectedIds` 中。只有当用户点击空白处触发 `clearSelection()` 后，`hoveredImageId` 才会被清空。
 
 ### 4.5 默认动作实现
 
@@ -158,8 +200,10 @@ if (hoveredImageId && toolbarButtons) {
 | 键盘方向键 / Ctrl+方向键 / Delete | 保留，无改动 |
 | 拖拽移动（dragMove） | 拖拽期间工具栏隐藏（drag 状态优先） |
 | 双击替换（quickReplace） | 保留，工具栏的 `↻` 按钮行为一致 |
-| 选中框（drawSelection） | 选中框继续显示，工具栏叠加在选中框外侧 |
+| 选中框（drawSelection） | 选中框继续显示，工具栏的角标按钮**绘制在选中外框之上**（更高 z 顺序），位置信息胶囊与选中外框同色 |
 | 占位格（drawSlots） | 占位格仍在空槽显示，工具栏在已有图片上，互不冲突 |
+| 点击图片（多选未启用时） | 单击图片 → `setActiveId(hit.id)` → 工具栏进入"锁定态" |
+| 点击空白处 | `clearSelection()` → 工具栏消失 |
 
 ### 4.8 导出纯净性
 
@@ -225,29 +269,40 @@ hoveredButtonId: HoverToolbarAction | null;
 
 ## 6. Visual Reference (text mockup)
 
+**Hover 预览态（鼠标悬停未选中）：**
+
 ```
+                  ●                              ← 顶部中点"↑" 22px 圆点
        ┌────────────────────────┐
-       │                        │
+   ●   │                        │   ●             ← 左右中点"←"/"→"
        │     uploaded image     │
+   ←   │                        │   →
        │                        │
-       │                        │
+   ●   │                        │   ●
        └────────────────────────┘
-            col 1 · row 1 · span 2       ← 位置信息行
-       ┌──────────────────────────┐
-       │  ↑  ↓  ←  → │ −  + │ × ↻  │  ← 工具栏
-       └──────────────────────────┘
+                  ●                              ← 底部中点"↓"
+                                            ●    ← 右上角"×" 26px 红色角标
+                       [ − ]   [ + ]            ← 缩放按钮（底部居中）
+                                            ●    ← 右下角"↻" 26px 靛蓝角标
 ```
 
-如果位置信息行 + 工具栏超过 canvas 底部：
+**选中锁定态（点击图片后）：**
+
 ```
-       ┌──────────────────────────┐
-       │  ↑  ↓  ←  → │ −  + │ × ↻  │  ← 工具栏（翻折到顶部）
-       └──────────────────────────┘
-            col 1 · row 1 · span 2       ← 位置信息行
-       ┌────────────────────────┐
-       │                        │
+            [ col 1 · row 1 · span 2 ]           ← 顶部居中胶囊（靛蓝）
+                  ●
+       ┌────────────────────────┐                 ← 选中外框（靛蓝 3px 圆角）
+   ●   │                        │   ●
        │     uploaded image     │
+   ←   │                        │   →
        │                        │
+   ●   │                        │   ●
+       └────────────────────────┘
+                  ●
+                       [ − ]   [ + ]
+                                            ●
+                                            ●
+```
        └────────────────────────┘
 ```
 
