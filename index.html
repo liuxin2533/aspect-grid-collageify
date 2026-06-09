@@ -482,6 +482,9 @@
       fileInput.click();
     });
     editor.on("replacerequest", () => replaceInput.click());
+    editor.on("toolbaraction", (action, id) => {
+      console.log("[hover-toolbar]", action, id);
+    });
     editor.on("error", (error) => {
       console.error(error);
       setStatus("Error");
