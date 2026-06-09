@@ -11,6 +11,7 @@ export type {
   FindSlotsOptions,
   GridPlacement,
   GridPoint,
+  HoverToolbarAction,
   ImageInput,
   ImageRect,
   ImageStyleOptions,
