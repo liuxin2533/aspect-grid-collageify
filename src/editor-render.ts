@@ -243,3 +243,160 @@ function drawFloatingDraggedImage(options: DrawEditorOverlayOptions) {
   ctx.stroke();
   ctx.restore();
 }
+
+export interface DrawHoverToolbarOptions {
+  ctx: CanvasRenderingContext2D;
+  image: CollageImage;
+  layout: CollageLayout;
+  canvasHeight: number;
+  hoveredButtonId: HoverToolbarAction | null;
+  position: "bottom" | "top";
+  gridColumns: number;
+}
+
+const TOOLBAR_BUTTON_SIZE = 24;
+const TOOLBAR_BUTTON_GAP = 4;
+const TOOLBAR_SEPARATOR_GAP = 8;
+const TOOLBAR_PADDING_X = 8;
+const TOOLBAR_PADDING_Y = 6;
+const TOOLBAR_RADIUS = 8;
+const TOOLBAR_OFFSET = 6;
+const TOOLBAR_INFO_GAP = 4;
+const TOOLBAR_INFO_HEIGHT = 16;
+
+const TOOLBAR_GROUPS: HoverToolbarAction[][] = [
+  ["up", "down", "left", "right"],
+  ["shrink", "expand"],
+  ["delete", "replace"],
+];
+
+const TOOLBAR_LABELS: Record<HoverToolbarAction, string> = {
+  up: "↑",
+  down: "↓",
+  left: "←",
+  right: "→",
+  shrink: "−",
+  expand: "+",
+  delete: "×",
+  replace: "↻",
+};
+
+const TOOLBAR_TITLES: Record<HoverToolbarAction, string> = {
+  up: "上移",
+  down: "下移",
+  left: "左移",
+  right: "右移",
+  shrink: "缩小",
+  expand: "放大",
+  delete: "删除",
+  replace: "替换",
+};
+
+export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToolbarAction, HoverToolbarButtonRect> {
+  const { ctx, image, layout, canvasHeight, hoveredButtonId, position, gridColumns } = options;
+  const rect = getImageRect(image, layout);
+
+  const groupSizes = TOOLBAR_GROUPS.map((group) =>
+    group.length * TOOLBAR_BUTTON_SIZE + (group.length - 1) * TOOLBAR_BUTTON_GAP
+  );
+  const innerWidth =
+    groupSizes.reduce((sum, w) => sum + w, 0) +
+    Math.max(0, TOOLBAR_GROUPS.length - 1) * TOOLBAR_SEPARATOR_GAP;
+  const toolbarWidth = innerWidth + TOOLBAR_PADDING_X * 2;
+  const toolbarHeight = TOOLBAR_BUTTON_SIZE + TOOLBAR_PADDING_Y * 2;
+
+  const centerX = rect.x + rect.w / 2;
+  const toolbarX = Math.max(TOOLBAR_RADIUS, Math.min(canvasHeight - toolbarWidth - TOOLBAR_RADIUS, centerX - toolbarWidth / 2));
+
+  let toolbarY: number;
+  if (position === "top") {
+    toolbarY = Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
+  } else {
+    const desiredY = rect.y + rect.h + TOOLBAR_OFFSET;
+    toolbarY = desiredY + toolbarHeight + TOOLBAR_INFO_HEIGHT + TOOLBAR_INFO_GAP <= canvasHeight
+      ? desiredY
+      : Math.max(TOOLBAR_RADIUS, rect.y - TOOLBAR_OFFSET - toolbarHeight);
+  }
+
+  const infoY = position === "top" || toolbarY < rect.y
+    ? toolbarY + toolbarHeight + TOOLBAR_INFO_GAP
+    : rect.y + rect.h + TOOLBAR_OFFSET;
+
+  const buttons = new Map<HoverToolbarAction, HoverToolbarButtonRect>();
+  const enabled: Record<HoverToolbarAction, boolean> = {
+    up: true,
+    down: true,
+    left: true,
+    right: true,
+    shrink: image.span > 1,
+    expand: image.span < gridColumns,
+    delete: true,
+    replace: true,
+  };
+
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.4)";
+  ctx.lineWidth = 1;
+  ctx.shadowColor = "rgba(15, 23, 42, 0.18)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 8;
+  ctx.beginPath();
+  ctx.roundRect(toolbarX, toolbarY, toolbarWidth, toolbarHeight, TOOLBAR_RADIUS);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "rgba(148, 163, 184, 0.3)";
+  ctx.lineWidth = 1;
+  let cursorX = toolbarX + TOOLBAR_PADDING_X;
+  const buttonCenterY = toolbarY + TOOLBAR_PADDING_Y + TOOLBAR_BUTTON_SIZE / 2;
+  for (let g = 0; g < TOOLBAR_GROUPS.length; g++) {
+    const group = TOOLBAR_GROUPS[g];
+    if (g > 0) {
+      const sepX = cursorX + TOOLBAR_SEPARATOR_GAP / 2;
+      ctx.beginPath();
+      ctx.moveTo(sepX, toolbarY + TOOLBAR_PADDING_Y + 2);
+      ctx.lineTo(sepX, toolbarY + TOOLBAR_PADDING_Y + TOOLBAR_BUTTON_SIZE - 2);
+      ctx.stroke();
+      cursorX += TOOLBAR_SEPARATOR_GAP;
+    }
+    for (const action of group) {
+      const bx = cursorX;
+      const by = toolbarY + TOOLBAR_PADDING_Y;
+      const isHovered = hoveredButtonId === action && enabled[action];
+      if (isHovered) {
+        ctx.fillStyle = "rgba(79, 70, 229, 0.12)";
+        ctx.beginPath();
+        ctx.roundRect(bx, by, TOOLBAR_BUTTON_SIZE, TOOLBAR_BUTTON_SIZE, 6);
+        ctx.fill();
+      }
+      ctx.fillStyle = enabled[action]
+        ? (isHovered ? "#4f46e5" : "#1e293b")
+        : "#cbd5e1";
+      ctx.font = "600 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(TOOLBAR_LABELS[action], bx + TOOLBAR_BUTTON_SIZE / 2, buttonCenterY);
+      if (enabled[action]) {
+        buttons.set(action, { action, x: bx, y: by, w: TOOLBAR_BUTTON_SIZE, h: TOOLBAR_BUTTON_SIZE });
+      }
+      cursorX += TOOLBAR_BUTTON_SIZE + TOOLBAR_BUTTON_GAP;
+    }
+    if (group.length > 0) cursorX -= TOOLBAR_BUTTON_GAP;
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "#64748b";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const infoText = `col ${image.gridX + 1} · row ${image.gridY + 1} · span ${image.span}`;
+  ctx.fillText(infoText, centerX, infoY);
+  ctx.restore();
+
+  return buttons;
+}
