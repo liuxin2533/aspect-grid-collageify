@@ -65,9 +65,6 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
   if (overlay.showHoverToolbar && options.hoveredImageId && !options.drag?.imageId) {
     const hoveredImage = options.images.find((image) => image.id === options.hoveredImageId);
     if (hoveredImage) {
-      const showInfo =
-        options.hoveredImageId === options.activeId ||
-        (options.selectedIds ? options.selectedIds.has(options.hoveredImageId) : false);
       return drawHoverToolbar({
         ctx: options.ctx,
         image: hoveredImage,
@@ -75,7 +72,7 @@ export function drawEditorOverlay(options: DrawEditorOverlayOptions): Map<HoverT
         canvasWidth: options.width,
         canvasHeight: options.height,
         hoveredButtonId: options.hoveredButtonId,
-        showInfo,
+        showInfo: true,
         gridColumns: options.collageOptions.gridColumns,
       });
     }
@@ -311,47 +308,20 @@ export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToo
   const bottomCx = topCx;
   const midCy = rect.y + rect.h / 2;
 
-  // Resize buttons live BELOW the down button (if there's canvas room) and span 2 × 22 + 4 gap = 48px
-  const resizeTotalWidth = DIRECTION_BUTTON_RADIUS * 4 + 4;
-  const hasRoomBelow = rect.y + rect.h + CORNER_BADGE_RADIUS * 2 + 4 < options.canvasHeight;
-
-  // Direction buttons: top, left, right are always on the edge. Bottom direction is replaced by resize pair if they fit below.
-  // We always place all 4 direction buttons; if there's no room for resize pair, the resize pair goes next to the down button (shifted right by 2 button radii) — i.e. still visible on the bottom edge but slightly offset.
+  // Direction buttons: top, left, right are always on the edge. Down sits on the bottom edge.
   const downCy = rect.y + rect.h;
 
-  // Resize pair: below the bottom edge by ~14px (half a button + a small gap), centered horizontally on the image, with the shrink on the left, expand on the right
-  const resizeOffsetY = DIRECTION_BUTTON_RADIUS + 4;
-  const shrinkCx = hasRoomBelow ? bottomCx - DIRECTION_BUTTON_RADIUS - 2 : bottomCx;
-  const expandCx = hasRoomBelow ? bottomCx + DIRECTION_BUTTON_RADIUS + 2 : bottomCx;
-  const shrinkCy = hasRoomBelow ? downCy + resizeOffsetY : downCy;
-  const expandCy = shrinkCy;
+  // Resize buttons: centered inside the image, horizontally and vertically. Two buttons (shrink, expand) side by side, 4px apart.
+  const shrinkCx = topCx - DIRECTION_BUTTON_RADIUS - 2;
+  const expandCx = topCx + DIRECTION_BUTTON_RADIUS + 2;
+  const shrinkCy = midCy;
+  const expandCy = midCy;
 
   // Corner badges: aligned to the image's top-right and bottom-right corners, but offset outward by half a badge so half the badge is inside, half outside
   const deleteCx = rect.x + rect.w;
   const deleteCy = rect.y;
   const replaceCx = rect.x + rect.w;
   const replaceCy = rect.y + rect.h;
-
-  // Position info pill (only when selected/locked)
-  if (showInfo) {
-    const infoText = `col ${image.gridX + 1} · row ${image.gridY + 1} · span ${image.span}`;
-    ctx.save();
-    ctx.font = "11px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const textMetrics = ctx.measureText(infoText);
-    const pillW = Math.ceil(textMetrics.width) + 16;
-    const pillH = 22;
-    const pillX = Math.max(8, Math.min(canvasWidth - pillW - 8, topCx - pillW / 2));
-    const pillY = rect.y - pillH + 1; // overlap image top edge by 1px
-    ctx.fillStyle = INFO_PILL_BG;
-    ctx.beginPath();
-    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(infoText, topCx, pillY + pillH / 2);
-    ctx.restore();
-  }
 
   // Direction buttons (top, left, right, down)
   const drawDirection = (action: HoverToolbarAction, cx: number, cy: number) => {
@@ -444,6 +414,28 @@ export function drawHoverToolbar(options: DrawHoverToolbarOptions): Map<HoverToo
 
   drawCorner("delete", deleteCx, deleteCy, DELETE_BG, DELETE_HOVER_BG);
   drawCorner("replace", replaceCx, replaceCy, REPLACE_BG, REPLACE_HOVER_BG);
+
+  // Position info pill (drawn on the inside top of the image so it is always visible,
+  // and on top of the toolbar so the user can read it even when buttons overlap)
+  if (showInfo) {
+    const infoText = `(col,row,span):(${image.gridX + 1},${image.gridY + 1},${image.span})`;
+    ctx.save();
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const textMetrics = ctx.measureText(infoText);
+    const pillW = Math.ceil(textMetrics.width) + 16;
+    const pillH = 22;
+    const pillX = Math.max(rect.x + 4, Math.min(rect.x + rect.w - pillW - 4, topCx - pillW / 2));
+    const pillY = rect.y + 4;
+    ctx.fillStyle = INFO_PILL_BG;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(infoText, topCx, pillY + pillH / 2);
+    ctx.restore();
+  }
 
   return buttons;
 }

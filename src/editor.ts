@@ -421,8 +421,6 @@ export class CanvasCollageEditor {
       nextHoveredImage = hit.id;
     } else if (pointInToolbar) {
       nextHoveredImage = this.hoveredImageId;
-    } else if (this.hoveredImageId && this.selectedIds.has(this.hoveredImageId)) {
-      nextHoveredImage = this.hoveredImageId;
     } else {
       nextHoveredImage = null;
     }
