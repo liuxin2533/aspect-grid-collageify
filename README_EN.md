@@ -69,6 +69,8 @@ Want to try the visual editor before installing? 👉 [Open the Live](https://li
 
 The demo showcases the core editor workflows, including image upload, drag move, drag insert, swap, resize, remove, replace, and final export. It is a quick way to check whether the library fits your use case before adding it to a project.
 
+![Live](./docs/images/aspect-grid-collageify_demo1.png "Live")
+
 ## 📦 Installation
 
 ```bash
