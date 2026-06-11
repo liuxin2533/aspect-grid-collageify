@@ -558,14 +558,7 @@ export class CanvasCollageEditor {
   }
 
   private insertResolvedInputsAtPlacement(inputs: ImageInput[], placement: GridPlacement): CollageImage[] {
-    const gridRows = this.getCurrentGridRows();
-    const first = this.core.canPlace(placement, gridRows)
-      ? this.core.insertImageAt(inputs[0], placement)
-      : this.core.insertImages([inputs[0]], { gridRows, span: placement.span })[0];
-    const rest = inputs.length > 1
-      ? this.core.insertImages(inputs.slice(1), { gridRows, span: placement.span })
-      : [];
-    const inserted = [first, ...rest].filter((image): image is CollageImage => !!image);
+    const inserted = this.core.insertImagesAt(inputs, placement, this.getCurrentGridRows());
     if (inserted.length > 0) this.setSelection([inserted[inserted.length - 1].id]);
     return inserted;
   }

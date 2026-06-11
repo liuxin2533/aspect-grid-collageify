@@ -142,17 +142,32 @@ export class CollageCore {
     return this.insertImage(image);
   }
 
+  public insertImagesAt(inputs: ImageInput[], placement: GridPlacement, gridRows: number): CollageImage[] {
+    const nextImages = [...this.getImages()];
+    const inserted: CollageImage[] = [];
+
+    for (const input of inputs) {
+      const target = inserted.length === 0 && canPlace(nextImages, this.options.gridColumns, placement, gridRows)
+        ? placement
+        : findSlots(nextImages, this.options.gridColumns, { span: placement.span, gridRows })[0];
+      if (!target) break;
+      const image = this.createImage(input, target);
+      nextImages.push(image);
+      inserted.push(image);
+    }
+
+    this.setImages(nextImages);
+    return inserted;
+  }
+
   public insertImages(inputs: ImageInput[], options: InsertImagesOptions): CollageImage[] {
     const nextImages = [...this.getImages()];
     const inserted: CollageImage[] = [];
     const span = options.span ?? this.getPlacementSpan(options.placementPreset || this.options.placementPreset || "medium");
 
     for (const input of inputs) {
-      const slot = findSlots(nextImages, this.options.gridColumns, { span, gridRows: options.gridRows })[0] || {
-        gridX: 0,
-        gridY: options.gridRows,
-        span,
-      };
+      const slot = findSlots(nextImages, this.options.gridColumns, { span, gridRows: options.gridRows })[0];
+      if (!slot) break;
       const image = this.createImage(input, slot);
       nextImages.push(image);
       inserted.push(image);
