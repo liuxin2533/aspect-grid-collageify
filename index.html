@@ -1,632 +1,1494 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>aspect-grid-collageify v2 demo</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #020617;
-      color: #e2e8f0;
-    }
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>aspect-grid-collageify v2 demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0f14;
+        --surface: rgba(18, 24, 32, 0.82);
+        --surface-strong: rgba(24, 32, 42, 0.96);
+        --surface-soft: rgba(255, 255, 255, 0.055);
+        --line: rgba(255, 255, 255, 0.12);
+        --line-strong: rgba(255, 255, 255, 0.22);
+        --text: #f4efe5;
+        --text-soft: #c9c0ad;
+        --muted: #8f988f;
+        --amber: #ffb84d;
+        --orange: #ff7847;
+        --green: #8ccf7e;
+        --cyan: #7bdff2;
+        --blue: #4f7cff;
+        --danger: #ff6f61;
+        --shadow: rgba(0, 0, 0, 0.45);
+        font-family: ui-serif, Georgia, Cambria, 'Times New Roman', serif;
+        background: var(--bg);
+        color: var(--text);
+      }
 
-    * {
-      box-sizing: border-box;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    html,
-    body {
-      height: 100%;
-      overflow: hidden;
-    }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
 
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at top left, rgba(79, 70, 229, 0.28), transparent 34rem),
-        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.18), transparent 30rem),
-        #020617;
-    }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(
+            circle at 16% 12%,
+            rgba(255, 184, 77, 0.24),
+            transparent 28rem
+          ),
+          radial-gradient(
+            circle at 78% 18%,
+            rgba(123, 223, 242, 0.12),
+            transparent 24rem
+          ),
+          radial-gradient(
+            circle at 72% 88%,
+            rgba(255, 120, 71, 0.18),
+            transparent 30rem
+          ),
+          linear-gradient(135deg, #080b0f 0%, #101720 52%, #0a0d0f 100%);
+      }
 
-    button,
-    input,
-    select {
-      font: inherit;
-    }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.34;
+        background-image:
+          linear-gradient(rgba(244, 239, 229, 0.035) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(244, 239, 229, 0.035) 1px,
+            transparent 1px
+          );
+        background-size: 42px 42px;
+        mask-image: radial-gradient(circle at center, black, transparent 78%);
+      }
 
-    .app {
-      height: 100%;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-    }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.075;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+        mix-blend-mode: screen;
+      }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1rem 1.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(16px);
-    }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
 
-    h1 {
-      margin: 0;
-      font-size: 1.1rem;
-      letter-spacing: -0.02em;
-    }
+      .app {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
 
-    .subtitle {
-      margin-top: 0.25rem;
-      color: #94a3b8;
-      font-size: 0.82rem;
-    }
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid var(--line);
+        background: rgba(8, 11, 15, 0.72);
+        backdrop-filter: blur(18px);
+      }
 
-    .badge {
-      border: 1px solid rgba(99, 102, 241, 0.35);
-      background: rgba(99, 102, 241, 0.12);
-      color: #c7d2fe;
-      border-radius: 999px;
-      padding: 0.35rem 0.7rem;
-      font-size: 0.78rem;
-      white-space: nowrap;
-    }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-width: 0;
+      }
 
-    main {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      min-height: 0;
-      overflow: hidden;
-    }
+      .mark {
+        width: 2.6rem;
+        height: 2.6rem;
+        flex: 0 0 auto;
+        border: 1px solid rgba(255, 225, 160, 0.72);
+        border-radius: 0.2rem;
+        background:
+          linear-gradient(
+            90deg,
+            transparent calc(33.333% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(33.333% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(33.333% + 0.5px),
+            transparent calc(33.333% + 0.5px)
+          ),
+          linear-gradient(
+            90deg,
+            transparent calc(66.666% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(66.666% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(66.666% + 0.5px),
+            transparent calc(66.666% + 0.5px)
+          ),
+          linear-gradient(
+            transparent calc(33.333% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(33.333% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(33.333% + 0.5px),
+            transparent calc(33.333% + 0.5px)
+          ),
+          linear-gradient(
+            transparent calc(66.666% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(66.666% - 0.5px),
+            rgba(255, 248, 226, 0.82) calc(66.666% + 0.5px),
+            transparent calc(66.666% + 0.5px)
+          ),
+          #e98b35;
+        box-shadow: 0 8px 22px rgba(255, 120, 71, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
 
-    .stage {
-      display: grid;
-      grid-template-rows: 1fr auto;
-      gap: 1rem;
-      padding: 1.25rem;
-      min-width: 0;
-      min-height: 0;
-    }
+      .mark::before,
+      .mark::after {
+        content: none;
+      }
 
-    .footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      color: #94a3b8;
-      font-size: 0.82rem;
-    }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.15rem, 2vw, 1.65rem);
+        line-height: 1;
+        letter-spacing: -0.04em;
+        text-transform: lowercase;
+      }
 
-    .canvas-shell {
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 1.25rem;
-      background:
-        linear-gradient(45deg, rgba(30, 41, 59, 0.65) 25%, transparent 25%),
-        linear-gradient(-45deg, rgba(30, 41, 59, 0.65) 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, rgba(30, 41, 59, 0.65) 75%),
-        linear-gradient(-45deg, transparent 75%, rgba(30, 41, 59, 0.65) 75%);
-      background-size: 22px 22px;
-      background-position: 0 0, 0 11px, 11px -11px, -11px 0;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
-    }
+      .subtitle {
+        margin-top: 0.34rem;
+        color: var(--text-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    canvas {
-      width: min(60vh, 100%);
-      aspect-ratio: 3 / 4;
-      max-height: 100%;
-      border-radius: 1rem;
-      outline: none;
-      background: #fff;
-      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-    }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.55rem;
+      }
 
-    canvas.transparent-bg {
-      background: transparent;
-    }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.065);
+        color: var(--text-soft);
+        border-radius: 999px;
+        padding: 0.44rem 0.7rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
 
-    aside {
-      min-height: 0;
-      overflow: auto;
-      border-left: 1px solid rgba(148, 163, 184, 0.16);
-      background: rgba(15, 23, 42, 0.82);
-      padding: 1.25rem;
-    }
+      #status::before {
+        content: '';
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 16px rgba(140, 207, 126, 0.9);
+      }
 
-    .panel {
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 1rem;
-      padding: 1rem;
-      background: rgba(2, 6, 23, 0.46);
-      margin-bottom: 1rem;
-    }
-
-    .panel h2 {
-      margin: 0 0 0.85rem;
-      font-size: 0.92rem;
-    }
-
-    .field {
-      display: grid;
-      gap: 0.45rem;
-      margin-bottom: 0.85rem;
-    }
-
-    label {
-      color: #94a3b8;
-      font-size: 0.78rem;
-    }
-
-    select,
-    input[type="number"],
-    input[type="color"],
-    input[type="checkbox"] {
-      width: 100%;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 0.7rem;
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 0.62rem 0.7rem;
-    }
-
-    input[type="checkbox"] {
-      width: auto;
-      accent-color: #6366f1;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: #6366f1;
-    }
-
-    .row,
-    .compact-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.65rem;
-    }
-
-    .compact-row .field,
-    .compact-row .check-field {
-      margin-bottom: 0.7rem;
-    }
-
-    .check-field {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 0.7rem;
-      background: rgba(15, 23, 42, 0.7);
-      padding: 0.62rem 0.7rem;
-      min-height: 40px;
-    }
-
-    .check-field label {
-      color: #e2e8f0;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.65rem;
-    }
-
-    .action-hint {
-      margin: -0.25rem 0 0.8rem;
-      color: #94a3b8;
-      font-size: 0.72rem;
-      line-height: 1.45;
-    }
-
-    button {
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 0.75rem;
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
-      color: #e2e8f0;
-      padding: 0.68rem 0.8rem;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-      transition: transform 0.15s ease, border-color 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    button.primary {
-      background: linear-gradient(135deg, #4f46e5, #2563eb);
-      border-color: rgba(199, 210, 254, 0.28);
-      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.22);
-    }
-
-    button.danger {
-      color: #fecaca;
-      border-color: rgba(248, 113, 113, 0.24);
-      background: linear-gradient(180deg, rgba(127, 29, 29, 0.42), rgba(15, 23, 42, 0.95));
-    }
-
-    button.secondary {
-      color: #c7d2fe;
-      border-color: rgba(129, 140, 248, 0.24);
-    }
-
-    button:hover {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
-    }
-
-    .image-list {
-      display: grid;
-      gap: 0.55rem;
-      max-height: 260px;
-      overflow: auto;
-      padding-right: 0.25rem;
-    }
-
-    .image-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.14);
-      border-radius: 0.75rem;
-      padding: 0.65rem;
-      background: rgba(15, 23, 42, 0.72);
-      font-size: 0.8rem;
-    }
-
-    .muted {
-      color: #94a3b8;
-    }
-
-    code {
-      color: #c7d2fe;
-    }
-
-    @media (max-width: 920px) {
       main {
-        grid-template-columns: 1fr;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+        overflow: hidden;
+      }
+
+      .stage {
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem 1rem;
+      }
+
+      .hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.45fr);
+        gap: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 1.1rem;
+        padding: 0.72rem 0.85rem;
+        overflow: hidden;
+        background:
+          linear-gradient(115deg, rgba(255, 184, 77, 0.16), transparent 42%),
+          linear-gradient(290deg, rgba(123, 223, 242, 0.1), transparent 44%),
+          rgba(18, 24, 32, 0.72);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+      }
+
+      .hero::after {
+        content: '';
+        position: absolute;
+        right: -3rem;
+        top: -5rem;
+        width: 14rem;
+        height: 14rem;
+        border: 1px solid rgba(255, 184, 77, 0.22);
+        border-radius: 50%;
+      }
+
+      .hero-kicker {
+        margin: 0 0 0.28rem;
+        color: var(--amber);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .hero h2 {
+        margin: 0;
+        max-width: 720px;
+        font-size: clamp(1.15rem, 2vw, 1.95rem);
+        line-height: 0.94;
+        letter-spacing: -0.065em;
+      }
+
+      .hero-copy {
+        margin: 0.48rem 0 0;
+        max-width: 680px;
+        color: var(--text-soft);
+        font-size: 0.76rem;
+        line-height: 1.42;
+      }
+
+      .feature-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.38rem;
+        margin-top: 0.62rem;
+      }
+
+      .feature-pill {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-soft);
+        padding: 0.34rem 0.5rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.03em;
+      }
+
+      .workflow-card {
+        position: relative;
+        z-index: 1;
+        align-self: stretch;
+        display: grid;
+        gap: 0.55rem;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        min-height: 3.65rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1rem;
+        padding: 0.5rem;
+        background: rgba(8, 11, 15, 0.36);
+      }
+
+      .metric strong {
+        display: block;
+        color: var(--text);
+        font-size: 1rem;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 0.32rem;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.62rem;
+        line-height: 1.35;
+        text-transform: uppercase;
+      }
+
+      .workspace {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 214px;
+        gap: 1rem;
+      }
+
+      .canvas-shell {
+        position: relative;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(1.2rem, 3vw, 2rem);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 1.5rem;
+        overflow: hidden;
+        background:
+          linear-gradient(135deg, rgba(255, 184, 77, 0.12), transparent 32%),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(123, 223, 242, 0.14),
+            transparent 18rem
+          ),
+          rgba(13, 17, 23, 0.86);
+        box-shadow:
+          0 30px 82px var(--shadow),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .canvas-shell::before {
+        content: '';
+        position: absolute;
+        inset: 1rem;
+        border: 1px dashed rgba(255, 184, 77, 0.24);
+        border-radius: 1rem;
+        pointer-events: none;
+      }
+
+      .canvas-shell::after {
+        content: 'drop zone';
+        position: absolute;
+        right: 1.55rem;
+        bottom: 1.3rem;
+        color: rgba(244, 239, 229, 0.34);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      .drop-callout {
+        position: absolute;
+        left: 1.45rem;
+        top: 1.45rem;
+        z-index: 2;
+        width: min(18rem, calc(100% - 2.9rem));
+        border: 1px solid rgba(255, 184, 77, 0.28);
+        border-radius: 1rem;
+        background: rgba(8, 11, 15, 0.72);
+        padding: 0.78rem;
+        pointer-events: none;
+        backdrop-filter: blur(12px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      body.has-images .drop-callout {
+        opacity: 0;
+        transform: translateY(-0.4rem);
+      }
+
+      .drop-callout strong {
+        display: block;
+        color: #ffe1a0;
+        font-size: 0.9rem;
+      }
+
+      .drop-callout span {
+        display: block;
+        margin-top: 0.28rem;
+        color: var(--text-soft);
+        font-size: 0.76rem;
+        line-height: 1.45;
+      }
+
+      canvas {
+        position: relative;
+        z-index: 1;
+        width: min(60vh, 100%);
+        aspect-ratio: 3 / 4;
+        max-height: 100%;
+        /* border-radius: 1.1rem; */
+        outline: none;
+        background: #fff;
+        box-shadow:
+          0 34px 70px rgba(0, 0, 0, 0.5),
+          0 0 0 10px rgba(255, 255, 255, 0.045),
+          0 0 0 1px rgba(255, 255, 255, 0.25);
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      canvas:focus {
+        box-shadow:
+          0 34px 70px rgba(0, 0, 0, 0.5),
+          0 0 0 10px rgba(255, 184, 77, 0.08),
+          0 0 0 1px rgba(255, 184, 77, 0.7);
+      }
+
+      canvas.transparent-bg {
+        background: transparent;
+      }
+
+      .capability-rail {
+        min-height: 0;
+        display: grid;
+        gap: 0.72rem;
+        align-content: start;
+      }
+
+      .capability-card {
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        padding: 0.8rem;
+        background: rgba(18, 24, 32, 0.72);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      }
+
+      .capability-card b {
+        display: block;
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+
+      .capability-card span {
+        display: block;
+        margin-top: 0.32rem;
+        color: var(--muted);
+        font-size: 0.74rem;
+        line-height: 1.45;
+      }
+
+      .footer {
+        display: grid;
+        grid-template-columns: repeat(3, auto) 1fr;
+        align-items: center;
+        gap: 0.62rem;
+        color: var(--text-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.7rem;
+      }
+
+      .footer span,
+      .key-chip {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(8, 11, 15, 0.52);
+        padding: 0.45rem 0.62rem;
+      }
+
+      .key-chip {
+        justify-self: end;
+        color: var(--muted);
       }
 
       aside {
-        border-left: 0;
-        border-top: 1px solid rgba(148, 163, 184, 0.16);
+        min-height: 0;
+        overflow: auto;
+        border-left: 1px solid var(--line);
+        background: linear-gradient(
+          180deg,
+          rgba(18, 24, 32, 0.94),
+          rgba(9, 12, 16, 0.92)
+        );
+        padding: 1rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 184, 77, 0.5) transparent;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <header>
-      <div>
-        <h1>aspect-grid-collageify <span class="badge">v2 Core / Editor</span></h1>
-        <div class="subtitle">Core 负责最终拼图；Editor 只负责可视化编辑覆盖层和输入事件。</div>
-      </div>
-      <div class="badge" id="status">Ready</div>
-    </header>
 
-    <main>
-      <section class="stage">
-        <div class="canvas-shell">
-          <canvas id="collage-canvas"></canvas>
+      .panel {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 1.12rem;
+        padding: 0.95rem;
+        background:
+          linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.045),
+            rgba(255, 255, 255, 0.018)
+          ),
+          var(--surface);
+        margin-bottom: 1rem;
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.18);
+      }
+
+      .panel.feature-panel {
+        border-color: rgba(255, 184, 77, 0.26);
+        background:
+          linear-gradient(135deg, rgba(255, 184, 77, 0.12), transparent 62%),
+          var(--surface);
+      }
+
+      .panel h2 {
+        margin: 0 0 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.65rem;
+        color: #ffe1a0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .panel h2::after {
+        content: '';
+        height: 1px;
+        flex: 1;
+        background: rgba(255, 184, 77, 0.2);
+      }
+
+      .panel-copy {
+        margin: -0.2rem 0 0.85rem;
+        color: var(--text-soft);
+        font-size: 0.78rem;
+        line-height: 1.55;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 0.48rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .feature-list li {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.55rem;
+        align-items: start;
+        color: var(--text-soft);
+        font-size: 0.76rem;
+        line-height: 1.45;
+      }
+
+      .feature-list li::before {
+        content: '';
+        width: 0.42rem;
+        height: 0.42rem;
+        margin-top: 0.36rem;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 12px rgba(255, 184, 77, 0.45);
+      }
+
+      .field {
+        display: grid;
+        gap: 0.42rem;
+        margin-bottom: 0.78rem;
+      }
+
+      label {
+        color: var(--text-soft);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.66rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      select,
+      input[type='number'],
+      input[type='color'] {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 0.76rem;
+        background: rgba(8, 11, 15, 0.78);
+        color: var(--text);
+        padding: 0.65rem 0.68rem;
+        outline: none;
+        transition:
+          border-color 0.16s ease,
+          box-shadow 0.16s ease,
+          background 0.16s ease;
+      }
+
+      select:focus,
+      input[type='number']:focus,
+      input[type='color']:focus {
+        border-color: rgba(255, 184, 77, 0.72);
+        box-shadow: 0 0 0 3px rgba(255, 184, 77, 0.1);
+        background: rgba(8, 11, 15, 0.96);
+      }
+
+      input[type='color'] {
+        min-height: 2.65rem;
+        padding: 0.28rem;
+      }
+
+      input[type='checkbox'] {
+        width: 1.05rem;
+        height: 1.05rem;
+        accent-color: var(--amber);
+      }
+
+      input[type='range'] {
+        width: 100%;
+        height: 0.32rem;
+        accent-color: var(--amber);
+        cursor: pointer;
+      }
+
+      .compact-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.62rem;
+      }
+
+      .compact-row .field,
+      .compact-row .check-field {
+        margin-bottom: 0.7rem;
+      }
+
+      .check-field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 0.76rem;
+        background: rgba(8, 11, 15, 0.5);
+        padding: 0.68rem;
+        min-height: 42px;
+      }
+
+      .check-field label {
+        color: var(--text);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.62rem;
+      }
+
+      .actions .primary {
+        grid-column: span 2;
+      }
+
+      .export-control {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 0.62rem;
+        grid-column: span 2;
+        margin-top: 0.12rem;
+      }
+
+      .export-control select,
+      .export-control button {
+        min-height: 3.1rem;
+      }
+
+      .export-control button {
+        font-size: 0.78rem;
+      }
+
+      .action-hint {
+        margin: -0.2rem 0 0.85rem;
+        color: var(--text-soft);
+        font-size: 0.78rem;
+        line-height: 1.55;
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 0.82rem;
+        background: linear-gradient(
+          180deg,
+          rgba(38, 48, 61, 0.96),
+          rgba(12, 16, 22, 0.96)
+        );
+        color: var(--text);
+        padding: 0.72rem 0.78rem;
+        cursor: pointer;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        transition:
+          transform 0.16s ease,
+          border-color 0.16s ease,
+          filter 0.16s ease,
+          box-shadow 0.16s ease;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, var(--amber), var(--orange));
+        border-color: rgba(255, 225, 160, 0.48);
+        color: #171006;
+        box-shadow: 0 12px 26px rgba(255, 120, 71, 0.24);
+      }
+
+      button.danger {
+        color: #ffd8d3;
+        border-color: rgba(255, 111, 97, 0.38);
+        background: linear-gradient(
+          180deg,
+          rgba(108, 38, 34, 0.78),
+          rgba(24, 16, 17, 0.96)
+        );
+      }
+
+      button.secondary {
+        color: #ffe1a0;
+        border-color: rgba(255, 184, 77, 0.22);
+      }
+
+      button:hover {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .image-list {
+        display: grid;
+        gap: 0.58rem;
+        max-height: 244px;
+        overflow: auto;
+        padding-right: 0.25rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 184, 77, 0.5) transparent;
+      }
+
+      .image-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 0.86rem;
+        padding: 0.7rem;
+        background: rgba(8, 11, 15, 0.48);
+        font-size: 0.8rem;
+      }
+
+      .image-item strong {
+        display: block;
+        max-width: 190px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .image-item button {
+        padding: 0.5rem 0.62rem;
+        font-size: 0.66rem;
+      }
+
+      .muted {
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      code {
+        color: #ffe1a0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      @media (max-width: 1180px) {
+        .hero,
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .workflow-card,
+        .capability-rail {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      @media (max-width: 980px) {
+        html,
+        body {
+          overflow: auto;
+        }
+
+        .app {
+          min-height: 100%;
+          height: auto;
+        }
+
+        main {
+          grid-template-columns: 1fr;
+          overflow: visible;
+        }
+
+        .stage {
+          min-height: 76vh;
+        }
+
+        aside {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          overflow: visible;
+        }
+      }
+
+      @media (max-width: 680px) {
+        header,
+        .top-actions {
+          align-items: flex-start;
+          grid-template-columns: 1fr;
+          justify-content: flex-start;
+        }
+
+        .stage,
+        aside {
+          padding: 0.8rem;
+        }
+
+        .hero,
+        .canvas-shell,
+        .panel {
+          border-radius: 1rem;
+        }
+
+        .workflow-card,
+        .capability-rail,
+        .compact-row,
+        .actions,
+        .footer {
+          grid-template-columns: 1fr;
+        }
+
+        .actions .primary,
+        .export-control {
+          grid-column: auto;
+        }
+
+        .key-chip {
+          justify-self: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand">
+          <div class="mark" aria-hidden="true"></div>
+          <div>
+            <h1>
+              aspect-grid-collageify <span class="badge">v2 Core / Editor</span>
+            </h1>
+            <div class="subtitle">
+              Canvas collage core + visual editor playground
+            </div>
+          </div>
         </div>
-        <div class="footer">
-          <span>图片数：<code id="image-count">0</code></span>
-          <span>选区：<code id="selection-label">-</code></span>
+        <div class="top-actions">
+          <div class="badge">No server · Pure frontend</div>
+          <div class="badge" id="status">Ready</div>
         </div>
-      </section>
+      </header>
 
-      <aside>
-        <div class="panel">
-          <h2>Core options</h2>
-          <div class="compact-row">
-            <div class="field">
-              <label for="container-ratio">容器比例</label>
-              <select id="container-ratio">
-                <option value="3:4">3:4</option>
-                <option value="1:1">1:1</option>
-                <option value="4:3">4:3</option>
-                <option value="16:9">16:9</option>
-                <option value="9:16">9:16</option>
-              </select>
+      <main>
+        <section class="stage">
+          <div class="hero">
+            <div>
+              <p class="hero-kicker">Interactive demo</p>
+              <h2>
+                Drop images into the grid, edit the layout, and export a clean
+                collage.
+              </h2>
+              <p class="hero-copy">
+                This demo highlights the core workflow: grid layout, collision
+                rules, drag insertion, visual movement, shortcut resizing, hover
+                toolbar actions, replace/delete, and PNG export.
+              </p>
+              <div class="feature-strip">
+                <span class="feature-pill">Upload / drag insert</span>
+                <span class="feature-pill">Grid collision layout</span>
+                <span class="feature-pill">Hover edit toolbar</span>
+                <span class="feature-pill">Keyboard shortcuts</span>
+                <span class="feature-pill">Offscreen PNG export</span>
+              </div>
             </div>
-            <div class="field">
-              <label for="image-ratio">图片比例</label>
-              <select id="image-ratio">
-                <option value="16:9">16:9</option>
-                <option value="4:3">4:3</option>
-                <option value="1:1">1:1</option>
-                <option value="3:2">3:2</option>
-              </select>
+            <div class="workflow-card" aria-label="Core workflow">
+              <div class="metric">
+                <strong>01</strong
+                ><span>Drop images into any empty grid slot</span>
+              </div>
+              <div class="metric">
+                <strong>02</strong
+                ><span>Move, swap, resize, replace, delete</span>
+              </div>
+              <div class="metric">
+                <strong>03</strong
+                ><span>Tune ratio, gap, padding, shadows</span>
+              </div>
+              <div class="metric">
+                <strong>04</strong><span>Export clean final PNG from Core</span>
+              </div>
             </div>
           </div>
 
-          <div class="compact-row">
-            <div class="field">
-              <label for="padding-2k">Padding：<code id="padding-value">60</code></label>
-              <input id="padding-2k" type="range" min="0" max="180" step="5" value="60">
+          <div class="workspace">
+            <div class="canvas-shell">
+              <canvas id="collage-canvas"></canvas>
             </div>
-            <div class="field">
-              <label for="gap-2k">Gap：<code id="gap-value">24</code></label>
-              <input id="gap-2k" type="range" min="0" max="80" step="2" value="24">
+
+            <div class="capability-rail" aria-label="Feature highlights">
+              <div class="capability-card">
+                <b>Core rendering</b
+                ><span
+                  >Final export excludes gridlines, selection outlines, and drag
+                  previews.</span
+                >
+              </div>
+              <div class="capability-card">
+                <b>Editor controls</b
+                ><span
+                  >Selection, dragging, hover toolbar, and keyboard events live
+                  here.</span
+                >
+              </div>
+              <div class="capability-card">
+                <b>Grid constraints</b
+                ><span
+                  >Move, resize, and insert operations respect columns and
+                  collisions.</span
+                >
+              </div>
+              <div class="capability-card">
+                <b>Pure frontend</b
+                ><span
+                  >Image processing and export run entirely in the
+                  browser.</span
+                >
+              </div>
+              <div class="capability-card">
+                <b>Keyboard shortcuts</b
+                ><span
+                  >Ctrl/Cmd + click multi-selects, arrow keys move, Ctrl/Cmd +
+                  ↑/↓ resizes, and Delete removes.</span
+                >
+              </div>
             </div>
           </div>
 
-          <div class="compact-row">
-            <div class="field">
-              <label for="bg-color">背景色</label>
-              <input id="bg-color" type="color" value="#ffffff">
+          <div class="footer">
+            <span>Images: <code id="image-count">0</code></span>
+            <span>Selection: <code id="selection-label">-</code></span>
+            <span>Canvas: <code>Core clean output</code></span>
+            <span class="key-chip"
+              >Ctrl/Cmd + click to multi-select · Arrow keys move · Ctrl/Cmd +
+              ↑/↓ resize · Delete removes</span
+            >
+          </div>
+        </section>
+
+        <aside>
+          <div class="panel">
+            <h2>Layout core</h2>
+            <div class="compact-row">
+              <div class="field">
+                <label for="container-ratio">Canvas ratio</label>
+                <select id="container-ratio">
+                  <option value="3:4">3:4</option>
+                  <option value="1:1">1:1</option>
+                  <option value="4:3">4:3</option>
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="image-ratio">Image ratio</label>
+                <select id="image-ratio">
+                  <option value="16:9">16:9</option>
+                  <option value="4:3">4:3</option>
+                  <option value="1:1">1:1</option>
+                  <option value="3:2">3:2</option>
+                </select>
+              </div>
             </div>
-            <div class="check-field">
-              <label for="transparent-bg">背景透明</label>
-              <input id="transparent-bg" type="checkbox">
+
+            <div class="compact-row">
+              <div class="field">
+                <label for="placement-preset">Insert preset</label>
+                <select id="placement-preset">
+                  <option value="small">small</option>
+                  <option value="medium">medium</option>
+                  <option value="large" selected>large</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="grid-columns"
+                  >Grid columns: <code id="grid-columns-value">8</code></label
+                >
+                <input
+                  id="grid-columns"
+                  type="range"
+                  min="4"
+                  max="48"
+                  step="2"
+                  value="8"
+                />
+              </div>
+            </div>
+
+            <div class="compact-row">
+              <div class="field">
+                <label for="padding-2k"
+                  >Padding: <code id="padding-value">60</code></label
+                >
+                <input
+                  id="padding-2k"
+                  type="range"
+                  min="0"
+                  max="180"
+                  step="5"
+                  value="60"
+                />
+              </div>
+              <div class="field">
+                <label for="gap-2k"
+                  >Image gap: <code id="gap-value">24</code></label
+                >
+                <input
+                  id="gap-2k"
+                  type="range"
+                  min="0"
+                  max="80"
+                  step="2"
+                  value="24"
+                />
+              </div>
             </div>
           </div>
 
-          <div class="compact-row">
-            <div class="field">
-              <label for="placement-preset">插入预设</label>
-              <select id="placement-preset">
-                <option value="small">small</option>
-                <option value="medium" selected>medium</option>
-                <option value="large">large</option>
-              </select>
+          <div class="panel">
+            <h2>Visual style</h2>
+            <div class="compact-row">
+              <div class="field">
+                <label for="bg-color">Background color</label>
+                <input id="bg-color" type="color" value="#ffffff" />
+              </div>
+              <div class="check-field">
+                <label for="transparent-bg">Transparent background</label>
+                <input id="transparent-bg" type="checkbox" />
+              </div>
             </div>
-            <div class="field">
-              <label for="grid-columns">网格列数：<code id="grid-columns-value">8</code></label>
-              <input id="grid-columns" type="range" min="4" max="48" step="2" value="8">
+
+            <div class="compact-row">
+              <div class="field">
+                <label for="border-radius-2k"
+                  >Image radius: <code id="border-radius-value">24</code></label
+                >
+                <input
+                  id="border-radius-2k"
+                  type="range"
+                  min="0"
+                  max="120"
+                  step="2"
+                  value="24"
+                />
+              </div>
+              <div class="field">
+                <label for="shadow-blur-2k"
+                  >Shadow blur: <code id="shadow-blur-value">0</code></label
+                >
+                <input
+                  id="shadow-blur-2k"
+                  type="range"
+                  min="0"
+                  max="120"
+                  step="2"
+                  value="0"
+                />
+              </div>
+            </div>
+            <div class="compact-row">
+              <div class="field">
+                <label for="shadow-offset-2k"
+                  >Shadow offset: <code id="shadow-offset-value">0</code></label
+                >
+                <input
+                  id="shadow-offset-2k"
+                  type="range"
+                  min="0"
+                  max="80"
+                  step="2"
+                  value="0"
+                />
+              </div>
+              <div class="field">
+                <label for="shadow-opacity"
+                  >Shadow opacity:
+                  <code id="shadow-opacity-value">0.2</code></label
+                >
+                <input
+                  id="shadow-opacity"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.2"
+                />
+              </div>
+            </div>
+            <div class="compact-row">
+              <div class="check-field">
+                <label for="show-boundary">Show safe boundary</label>
+                <input id="show-boundary" type="checkbox" checked />
+              </div>
+              <div class="check-field">
+                <label for="show-gridlines">Show grid guides</label>
+                <input id="show-gridlines" type="checkbox" checked />
+              </div>
+            </div>
+            <div class="compact-row">
+              <div class="check-field">
+                <label for="show-slots">Show empty slots</label>
+                <input id="show-slots" type="checkbox" checked />
+              </div>
+              <div class="check-field">
+                <label for="show-hover-toolbar">Show hover toolbar</label>
+                <input id="show-hover-toolbar" type="checkbox" checked />
+              </div>
             </div>
           </div>
 
-          <div class="compact-row">
-            <div class="field">
-              <label for="border-radius-2k">图片圆角：<code id="border-radius-value">24</code></label>
-              <input id="border-radius-2k" type="range" min="0" max="120" step="2" value="24">
+          <div class="panel">
+            <h2>Editor actions</h2>
+            <p class="action-hint">
+              Insert, replace, delete, and export call the real Editor/Core
+              APIs. You can also use the in-canvas hover toolbar for image
+              edits.
+            </p>
+            <div class="actions">
+              <button class="primary" id="pick-files">Insert images</button>
+              <button class="secondary" id="replace-active">
+                Replace active
+              </button>
+              <button class="danger" id="delete-selection">
+                Delete selection
+              </button>
+              <button class="secondary" id="clear-selection">
+                Clear selection
+              </button>
+              <div class="export-control">
+                <select id="export-width" aria-label="Export resolution">
+                  <option value="1080">1080P</option>
+                  <option value="2048" selected>2K</option>
+                  <option value="4096">4K</option>
+                </select>
+                <button class="primary" id="export-png">Export PNG</button>
+              </div>
             </div>
-            <div class="field">
-              <label for="shadow-blur-2k">阴影模糊：<code id="shadow-blur-value">0</code></label>
-              <input id="shadow-blur-2k" type="range" min="0" max="120" step="2" value="0">
-            </div>
+            <input
+              id="file-input"
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+            />
+            <input id="replace-input" type="file" accept="image/*" hidden />
           </div>
-          <div class="compact-row">
-            <div class="field">
-              <label for="shadow-offset-2k">阴影偏移：<code id="shadow-offset-value">0</code></label>
-              <input id="shadow-offset-2k" type="range" min="0" max="80" step="2" value="0">
-            </div>
-            <div class="field">
-              <label for="shadow-opacity">阴影透明：<code id="shadow-opacity-value">0.2</code></label>
-              <input id="shadow-opacity" type="range" min="0" max="1" step="0.05" value="0.2">
-            </div>
+
+          <div class="panel">
+            <h2>Images from Core</h2>
+            <p class="panel-copy">
+              This panel reads directly from `core.getImages()` so you can
+              inspect the current grid coordinates and span.
+            </p>
+            <div class="image-list" id="image-list"></div>
           </div>
-        </div>
+        </aside>
+      </main>
+    </div>
 
-        <div class="panel">
-          <h2>Editor actions</h2>
-          <p class="action-hint">拖入图片到画布插入；Ctrl/Cmd + 单击多选；方向键移动；Ctrl/Cmd + 上下调整尺寸；Delete 删除。</p>
-          <div class="actions">
-            <button class="primary" id="pick-files">插入图片</button>
-            <button class="secondary" id="replace-active">替换选中</button>
-            <button class="danger" id="delete-selection">删除选区</button>
-            <button class="secondary" id="clear-selection">清空选区</button>
-            <button class="secondary" id="export-png">导出 PNG</button>
-          </div>
-          <input id="file-input" type="file" accept="image/*" multiple hidden>
-          <input id="replace-input" type="file" accept="image/*" hidden>
-        </div>
+    <script type="module">
+      import {
+        CollageCore,
+        CanvasCollageEditor,
+      } from './dist/index.mjs?v=20260609131240';
 
-        <div class="panel">
-          <h2>Images from Core</h2>
-          <div class="image-list" id="image-list"></div>
-        </div>
-      </aside>
-    </main>
-  </div>
-
-  <script type="module">
-    import { CollageCore, CanvasCollageEditor } from "./dist/index.mjs?v=20260609131240";
-
-    const canvas = document.getElementById("collage-canvas");
-    const status = document.getElementById("status");
-    const imageCount = document.getElementById("image-count");
-    const selectionLabel = document.getElementById("selection-label");
-    const imageList = document.getElementById("image-list");
-    const fileInput = document.getElementById("file-input");
-    const replaceInput = document.getElementById("replace-input");
-
-    const core = new CollageCore({
-      containerRatio: "3:4",
-      imageRatio: "16:9",
-      gridColumns: 8,
-      padding2K: 60,
-      gap2K: 24,
-      background: {
-        color: "#ffffff",
-        transparent: false,
-      },
-      imageStyle: {
-        borderRadius2K: 24,
-        shadowBlur2K: 0,
-        shadowOffset2K: 0,
-        shadowOpacity: 0.2,
-      },
-      images: [],
-      placementPreset: "medium",
-    });
-
-    const editor = new CanvasCollageEditor(canvas, core, {
-      multiSelect: true,
-      keyboard: true,
-      dragMove: true,
-      dragSwap: true,
-      dragInsert: true,
-      quickReplace: true,
-      overlay: {
+      const canvas = document.getElementById('collage-canvas');
+      const status = document.getElementById('status');
+      const imageCount = document.getElementById('image-count');
+      const selectionLabel = document.getElementById('selection-label');
+      const imageList = document.getElementById('image-list');
+      const fileInput = document.getElementById('file-input');
+      const replaceInput = document.getElementById('replace-input');
+      const exportWidth = document.getElementById('export-width');
+      const overlayOptions = {
         showBoundary: true,
         showGridlines: true,
         showSlots: true,
-        slotText: "插入图片",
-      },
-    });
+        showHoverToolbar: true,
+        slotText: 'Insert image',
+      };
 
-    editor.on("change", renderState);
-    editor.on("selectionchange", renderState);
-    editor.on("activechange", renderState);
-    editor.on("cellclick", (placement) => {
-      editor.setPendingInsertPlacement(placement);
-      fileInput.click();
-    });
-    editor.on("replacerequest", () => replaceInput.click());
-    editor.on("toolbaraction", (action, id) => {
-      console.log("[hover-toolbar]", action, id);
-    });
-    editor.on("error", (error) => {
-      console.error(error);
-      setStatus("Error");
-    });
-
-    document.getElementById("pick-files").addEventListener("click", () => {
-      editor.setPendingInsertPlacement(null);
-      fileInput.click();
-    });
-    document.getElementById("replace-active").addEventListener("click", () => replaceInput.click());
-    document.getElementById("delete-selection").addEventListener("click", () => {
-      if (core.removeImages(editor.getSelection())) editor.clearSelection();
-    });
-    document.getElementById("clear-selection").addEventListener("click", () => editor.clearSelection());
-    document.getElementById("export-png").addEventListener("click", exportPng);
-
-    fileInput.addEventListener("change", async () => {
-      await editor.insertFiles(fileInput.files || []);
-      fileInput.value = "";
-    });
-
-    replaceInput.addEventListener("change", async () => {
-      const file = replaceInput.files?.[0];
-      if (file) await editor.replaceActiveFile(file);
-      replaceInput.value = "";
-    });
-
-    bindOption("container-ratio", (value) => ({ containerRatio: value }));
-    bindOption("image-ratio", (value) => ({ imageRatio: value }));
-    bindOption("placement-preset", (value) => ({ placementPreset: value }));
-    bindOption("bg-color", (value) => ({ background: { color: value, transparent: core.getOptions().background?.transparent || false } }));
-    bindCheckboxOption("transparent-bg", (checked) => ({ background: { ...core.getOptions().background, transparent: checked } }), syncCanvasBackground);
-    bindNumberOption("grid-columns", "grid-columns-value", (value) => ({ gridColumns: value }));
-    bindNumberOption("padding-2k", "padding-value", (value) => ({ padding2K: value }));
-    bindNumberOption("gap-2k", "gap-value", (value) => ({ gap2K: value }));
-    bindNumberOption("border-radius-2k", "border-radius-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, borderRadius2K: value } }));
-    bindNumberOption("shadow-blur-2k", "shadow-blur-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowBlur2K: value } }));
-    bindNumberOption("shadow-offset-2k", "shadow-offset-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowOffset2K: value } }));
-    bindNumberOption("shadow-opacity", "shadow-opacity-value", (value) => ({ imageStyle: { ...core.getOptions().imageStyle, shadowOpacity: value } }));
-
-    window.addEventListener("resize", updateCanvasRatio);
-    syncCanvasBackground();
-    updateCanvasRatio();
-    renderState();
-
-    function bindOption(id, toOptions) {
-      document.getElementById(id).addEventListener("input", (event) => {
-        core.updateOptions(toOptions(event.target.value));
-        updateCanvasRatio();
+      const core = new CollageCore({
+        containerRatio: '3:4',
+        imageRatio: '16:9',
+        gridColumns: 8,
+        padding2K: 60,
+        gap2K: 24,
+        background: {
+          color: '#ffffff',
+          transparent: false,
+        },
+        imageStyle: {
+          borderRadius2K: 24,
+          shadowBlur2K: 0,
+          shadowOffset2K: 0,
+          shadowOpacity: 0.2,
+        },
+        images: [],
+        placementPreset: 'large',
       });
-    }
 
-    function bindNumberOption(id, valueId, toOptions) {
-      const input = document.getElementById(id);
-      const label = document.getElementById(valueId);
-      input.addEventListener("input", () => {
-        const value = Number(input.value);
-        label.textContent = String(value);
-        core.updateOptions(toOptions(value));
+      const editor = new CanvasCollageEditor(canvas, core, {
+        multiSelect: true,
+        keyboard: true,
+        dragMove: true,
+        dragSwap: true,
+        dragInsert: true,
+        quickReplace: true,
+        overlay: overlayOptions,
       });
-    }
 
-    function bindCheckboxOption(id, toOptions, afterChange) {
-      const input = document.getElementById(id);
-      input.addEventListener("change", () => {
-        core.updateOptions(toOptions(input.checked));
-        afterChange?.();
+      editor.on('change', renderState);
+      editor.on('selectionchange', renderState);
+      editor.on('activechange', renderState);
+      editor.on('cellclick', (placement) => {
+        editor.setPendingInsertPlacement(placement);
+        fileInput.click();
       });
-    }
+      editor.on('replacerequest', () => replaceInput.click());
+      editor.on('toolbaraction', (action, id) => {
+        console.log('[hover-toolbar]', action, id);
+      });
+      editor.on('error', (error) => {
+        console.error(error);
+        setStatus('Error');
+      });
 
-    function syncCanvasBackground() {
-      canvas.classList.toggle("transparent-bg", !!core.getOptions().background?.transparent);
-    }
+      document.getElementById('pick-files').addEventListener('click', () => {
+        editor.setPendingInsertPlacement(null);
+        fileInput.click();
+      });
+      document
+        .getElementById('replace-active')
+        .addEventListener('click', () => replaceInput.click());
+      document
+        .getElementById('delete-selection')
+        .addEventListener('click', () => {
+          if (core.removeImages(editor.getSelection())) editor.clearSelection();
+        });
+      document
+        .getElementById('clear-selection')
+        .addEventListener('click', () => editor.clearSelection());
+      document
+        .getElementById('export-png')
+        .addEventListener('click', exportPng);
 
-    function updateCanvasRatio() {
-      const ratio = core.getOptions().containerRatio;
-      const [w, h] = ratio.split(":").map(Number);
-      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
-        editor.resize();
-        return;
+      fileInput.addEventListener('change', async () => {
+        await editor.insertFiles(fileInput.files || []);
+        fileInput.value = '';
+      });
+
+      replaceInput.addEventListener('change', async () => {
+        const file = replaceInput.files?.[0];
+        if (file) await editor.replaceActiveFile(file);
+        replaceInput.value = '';
+      });
+
+      bindOption('container-ratio', (value) => ({ containerRatio: value }));
+      bindOption('image-ratio', (value) => ({ imageRatio: value }));
+      bindOption('placement-preset', (value) => ({ placementPreset: value }));
+      bindOption('bg-color', (value) => ({
+        background: {
+          color: value,
+          transparent: core.getOptions().background?.transparent || false,
+        },
+      }));
+      bindCheckboxOption(
+        'transparent-bg',
+        (checked) => ({
+          background: { ...core.getOptions().background, transparent: checked },
+        }),
+        syncCanvasBackground,
+      );
+      bindNumberOption('grid-columns', 'grid-columns-value', (value) => ({
+        gridColumns: value,
+      }));
+      bindNumberOption('padding-2k', 'padding-value', (value) => ({
+        padding2K: value,
+      }));
+      bindNumberOption('gap-2k', 'gap-value', (value) => ({ gap2K: value }));
+      bindNumberOption('border-radius-2k', 'border-radius-value', (value) => ({
+        imageStyle: { ...core.getOptions().imageStyle, borderRadius2K: value },
+      }));
+      bindNumberOption('shadow-blur-2k', 'shadow-blur-value', (value) => ({
+        imageStyle: { ...core.getOptions().imageStyle, shadowBlur2K: value },
+      }));
+      bindNumberOption('shadow-offset-2k', 'shadow-offset-value', (value) => ({
+        imageStyle: { ...core.getOptions().imageStyle, shadowOffset2K: value },
+      }));
+      bindNumberOption('shadow-opacity', 'shadow-opacity-value', (value) => ({
+        imageStyle: { ...core.getOptions().imageStyle, shadowOpacity: value },
+      }));
+      bindOverlayOption('show-boundary', 'showBoundary');
+      bindOverlayOption('show-gridlines', 'showGridlines');
+      bindOverlayOption('show-slots', 'showSlots');
+      bindOverlayOption('show-hover-toolbar', 'showHoverToolbar');
+
+      window.addEventListener('resize', updateCanvasRatio);
+      syncCanvasBackground();
+      updateCanvasRatio();
+      renderState();
+
+      function bindOption(id, toOptions) {
+        document.getElementById(id).addEventListener('input', (event) => {
+          core.updateOptions(toOptions(event.target.value));
+          updateCanvasRatio();
+        });
       }
 
-      const shell = canvas.parentElement;
-      const shellRect = shell?.getBoundingClientRect();
-      const maxWidth = Math.max(240, (shellRect?.width || 0) - 32);
-      const maxHeight = Math.max(240, (shellRect?.height || 0) - 32);
-      const ratioValue = w / h;
-      const widthByHeight = maxHeight * ratioValue;
-      const canvasWidth = Math.min(maxWidth, widthByHeight);
-      const canvasHeight = canvasWidth / ratioValue;
+      function bindNumberOption(id, valueId, toOptions) {
+        const input = document.getElementById(id);
+        const label = document.getElementById(valueId);
+        input.addEventListener('input', () => {
+          const value = Number(input.value);
+          label.textContent = String(value);
+          core.updateOptions(toOptions(value));
+        });
+      }
 
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-      canvas.style.aspectRatio = `${w} / ${h}`;
-      editor.resize();
-    }
+      function bindCheckboxOption(id, toOptions, afterChange) {
+        const input = document.getElementById(id);
+        input.addEventListener('change', () => {
+          core.updateOptions(toOptions(input.checked));
+          afterChange?.();
+        });
+      }
 
-    function renderState() {
-      const images = core.getImages();
-      const selection = editor.getSelection();
-      imageCount.textContent = String(images.length);
-      selectionLabel.textContent = selection.length ? selection.join(", ") : "-";
-      imageList.innerHTML = images.length
-        ? images.map((image) => `
+      function bindOverlayOption(id, key) {
+        const input = document.getElementById(id);
+        input.addEventListener('change', () => {
+          overlayOptions[key] = input.checked;
+          editor.render();
+        });
+      }
+
+      function syncCanvasBackground() {
+        canvas.classList.toggle(
+          'transparent-bg',
+          !!core.getOptions().background?.transparent,
+        );
+      }
+
+      function updateCanvasRatio() {
+        const ratio = core.getOptions().containerRatio;
+        const [w, h] = ratio.split(':').map(Number);
+        if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+          editor.resize();
+          return;
+        }
+
+        const shell = canvas.parentElement;
+        const shellRect = shell?.getBoundingClientRect();
+        const maxWidth = Math.max(240, (shellRect?.width || 0) - 32);
+        const maxHeight = Math.max(240, (shellRect?.height || 0) - 32);
+        const ratioValue = w / h;
+        const widthByHeight = maxHeight * ratioValue;
+        const canvasWidth = Math.min(maxWidth, widthByHeight);
+        const canvasHeight = canvasWidth / ratioValue;
+
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
+        canvas.style.aspectRatio = `${w} / ${h}`;
+        editor.resize();
+      }
+
+      function renderState() {
+        const images = core.getImages();
+        const selection = editor.getSelection();
+        document.body.classList.toggle('has-images', images.length > 0);
+        imageCount.textContent = String(images.length);
+        selectionLabel.textContent = selection.length
+          ? selection.join(', ')
+          : '-';
+        imageList.innerHTML = images.length
+          ? images
+              .map(
+                (image) => `
           <div class="image-item">
             <div>
               <strong>${escapeHtml(image.name)}</strong>
-              <div class="muted">${image.gridX}, ${image.gridY} · span ${image.span}</div>
+              <div class="muted">x ${image.gridX} · y ${image.gridY} · span ${image.span}</div>
             </div>
-            <button data-select="${image.id}">选中</button>
+            <button data-select="${image.id}">Select</button>
           </div>
-        `).join("")
-        : '<div class="muted">暂无图片。点击占位格或拖入文件。</div>';
+        `,
+              )
+              .join('')
+          : '<div class="muted">No images yet. Click a slot or drop files onto the canvas; Core state will appear here.</div>';
 
-      imageList.querySelectorAll("[data-select]").forEach((button) => {
-        button.addEventListener("click", () => editor.setActiveId(button.dataset.select));
-      });
-    }
+        imageList.querySelectorAll('[data-select]').forEach((button) => {
+          button.addEventListener('click', () =>
+            editor.setActiveId(button.dataset.select),
+          );
+        });
+      }
 
-    async function exportPng() {
-      setStatus("Exporting...");
-      const dataUrl = await core.exportPNG(2048);
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = "collage.png";
-      link.click();
-      setStatus("Ready");
-    }
+      async function exportPng() {
+        setStatus('Exporting...');
+        const width = Number(exportWidth.value) || 2048;
+        const dataUrl = await core.exportPNG(width);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `aspect-grid-collageify_${Date.now()}.png`;
+        link.click();
+        setStatus('Ready');
+      }
 
-    function setStatus(text) {
-      status.textContent = text;
-    }
+      function setStatus(text) {
+        status.textContent = text;
+      }
 
-    function escapeHtml(value) {
-      return value.replace(/[&<>'"]/g, (char) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "'": "&#39;",
-        '"': "&quot;",
-      }[char]));
-    }
-  </script>
-</body>
+      function escapeHtml(value) {
+        return value.replace(
+          /[&<>'"]/g,
+          (char) =>
+            ({
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              "'": '&#39;',
+              '"': '&quot;',
+            })[char],
+        );
+      }
+    </script>
+  </body>
 </html>
